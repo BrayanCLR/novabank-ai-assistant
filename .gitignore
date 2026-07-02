@@ -12,3 +12,4 @@ Thumbs.db
 # Variables de entorno en la raíz
 .env
 .env.*
+*:Zone.Identifier

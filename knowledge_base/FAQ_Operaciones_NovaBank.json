@@ -1,0 +1,42 @@
+[
+  {
+    "pregunta": "¿Cuánto tiempo tarda la acreditación de una transferencia nacional?",
+    "respuesta": "Las transferencias nacionales se acreditan normalmente entre 1 y 24 horas hábiles, dependiendo de la entidad receptora y los horarios de compensación."
+  },
+  {
+    "pregunta": "¿Por qué mi cuenta fue bloqueada preventivamente?",
+    "respuesta": "La cuenta puede ser bloqueada temporalmente cuando se detectan actividades inusuales, intentos de acceso sospechosos o posibles eventos de fraude."
+  },
+  {
+    "pregunta": "¿Cómo puedo iniciar una disputa por una transacción?",
+    "respuesta": "El cliente debe presentar la reclamación a través de los canales oficiales y adjuntar la documentación de respaldo correspondiente."
+  },
+  {
+    "pregunta": "¿Cuál es el plazo de resolución de un contracargo?",
+    "respuesta": "El proceso de investigación y resolución puede tardar hasta 45 días calendario, dependiendo de la complejidad del caso."
+  },
+  {
+    "pregunta": "¿Cómo puedo reactivar una cuenta suspendida?",
+    "respuesta": "La reactivación requiere una nueva validación de identidad y la revisión del área de Riesgos y Compliance."
+  },
+  {
+    "pregunta": "¿Qué debo hacer si una transferencia aparece en estado pendiente?",
+    "respuesta": "Se recomienda esperar el tiempo de procesamiento establecido y, de persistir el estado pendiente, contactar al área de soporte para una revisión manual."
+  },
+  {
+    "pregunta": "¿Cómo puedo actualizar mis datos personales?",
+    "respuesta": "La actualización de información debe realizarse mediante un proceso de reverificación KYC y validación documental."
+  },
+  {
+    "pregunta": "¿Qué sucede si se detecta una posible transacción fraudulenta?",
+    "respuesta": "NovaBank puede aplicar restricciones preventivas, suspender operaciones y solicitar información adicional para proteger los fondos del cliente."
+  },
+  {
+    "pregunta": "¿Cuál es el horario de procesamiento de transferencias internacionales?",
+    "respuesta": "Las transferencias internacionales son procesadas en días hábiles bancarios y están sujetas a validaciones regulatorias y de cumplimiento."
+  },
+  {
+    "pregunta": "¿Cómo puedo reportar un posible incidente de seguridad?",
+    "respuesta": "Los incidentes de seguridad deben reportarse inmediatamente al Centro de Operaciones de Seguridad (SOC) a través de los canales internos establecidos."
+  }
+]

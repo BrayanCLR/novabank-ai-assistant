@@ -1,0 +1,56 @@
+ARQUITECTURA DE SISTEMAS - NOVABANK
+
+La plataforma tecnológica de NovaBank está diseñada bajo una arquitectura de servicios desacoplados y orientada a eventos, permitiendo escalabilidad, resiliencia y alta disponibilidad.
+
+1. COMPONENTES PRINCIPALES
+
+Cliente Web / Aplicación Móvil
+        ↓
+API Gateway
+        ↓
+Servicio de Autenticación (JWT + MFA)
+        ↓
+Core Banking Service
+        ↓
+────────────────────────────────────
+|          Servicios Internos       |
+|-----------------------------------|
+| Payment Gateway Service           |
+| Fraud Detection Engine            |
+| Account Management Service        |
+| Notification Service              |
+| Audit & Logging Service           |
+| Document Repository Service       |
+────────────────────────────────────
+        ↓
+Base de Datos PostgreSQL
+        ↓
+Cache Distribuido Redis
+
+2. FLUJO DE TRANSFERENCIAS
+
+1. El cliente envía la solicitud mediante la API.
+2. El API Gateway valida el token de autenticación.
+3. El Core Banking Service ejecuta las reglas de negocio.
+4. El Fraud Detection Engine analiza el riesgo transaccional.
+5. El Payment Gateway procesa la operación financiera.
+6. Se registra la trazabilidad en el sistema de auditoría.
+7. El Notification Service envía correos, SMS y notificaciones push.
+
+3. INTEGRACIÓN ENTRE SISTEMAS
+
+- Comunicación mediante APIs REST seguras.
+- Intercambio de eventos mediante un Event Bus.
+- Comunicación cifrada utilizando TLS 1.3.
+- Autenticación entre servicios mediante tokens de servicio y certificados.
+
+4. SEGURIDAD
+
+- Cifrado de datos en tránsito y en reposo.
+- Control de acceso basado en roles (RBAC).
+- Registro centralizado de eventos y auditoría.
+- Monitoreo continuo y alertas de seguridad.
+
+5. ESCALABILIDAD
+
+La arquitectura permite incorporar nuevos microservicios, motores de inteligencia artificial, bases de datos vectoriales y capacidades RAG sin afectar los componentes existentes.

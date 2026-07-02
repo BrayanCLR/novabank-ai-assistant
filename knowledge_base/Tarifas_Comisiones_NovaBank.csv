@@ -1,0 +1,8 @@
+Servicio,Costo_USD,Frecuencia,Excepciones
+Mantenimiento de cuenta Premium,9.99,Mensual,"Exento para saldo promedio superior a 10,000 USD"
+Transferencia internacional (SWIFT),25.0,Por transacción,Sin excepción
+Reposición de tarjeta física,10.0,Por evento,Primera reposición anual sin costo
+Retiro en cajero internacional,3.5,Por transacción,Clientes Corporativos exentos
+Emisión de certificado bancario,5.0,Por solicitud,Formato digital gratuito
+Conversión de divisas,1.5,Por operación,Clientes Premium con tarifa preferencial
+Servicio de cuenta empresarial,29.99,Mensual,Exento para clientes corporativos estratégicos
