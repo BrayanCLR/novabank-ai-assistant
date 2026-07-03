@@ -42,7 +42,9 @@ export class GeminiService {
     }
 
     this.client = new GoogleGenAI({ apiKey });
-    this.logger.log('GeminiService inicializado y conectado a la API de Google');
+    this.logger.log(
+      'GeminiService inicializado y conectado a la API de Google',
+    );
   }
 
   async ask(prompt: string): Promise<string> {
