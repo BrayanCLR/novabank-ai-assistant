@@ -7,10 +7,11 @@ import { GeminiService } from './infrastructure/gemini/gemini.service';
 import { KnowledgeService } from './infrastructure/knowledge/knowledge.service';
 import { VectorStoreService } from './infrastructure/knowledge/vector-store.service';
 import { UniversalParser } from './infrastructure/parsers/universal.parser';
+import { DocumentsController } from './controller/documents.controller';
 
 @Module({
   imports: [ConfigModule],
-  controllers: [AgentController],
+  controllers: [AgentController, DocumentsController],
   providers: [
     AgentService,
     GeminiService,

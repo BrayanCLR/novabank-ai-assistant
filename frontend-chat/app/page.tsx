@@ -1,14 +1,17 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import DocumentsPanel from './components/DocumentsPanel';
 
 type Message = {
   role: 'user' | 'agent';
   content: string;
 };
 
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000/agent/ask';
+// Antes esto incluía "/agent/ask". Ahora es solo la base, porque
+// necesitamos construir varias rutas distintas (/agent/ask,
+// /knowledge/documents, /knowledge/upload).
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
 
 export default function Home() {
   const [messages, setMessages] = useState<Message[]>([
@@ -20,6 +23,7 @@ export default function Home() {
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isDocumentsPanelOpen, setIsDocumentsPanelOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -40,7 +44,7 @@ export default function Home() {
     setIsLoading(true);
 
     try {
-      const res = await fetch(API_URL, {
+      const res = await fetch(`${API_BASE_URL}/agent/ask`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mensaje: userMsg }),
@@ -48,7 +52,7 @@ export default function Home() {
 
       if (!res.ok) {
         const errorBody = await res.json().catch(() => null);
-        throw new InternalServerErrorException(errorBody?.message?.[0] ?? 'Error de conexión con el núcleo de NovaBank');
+        throw new Error(errorBody?.message?.[0] ?? 'Error de conexión con el núcleo de NovaBank');
       }
 
       const data = await res.json();
@@ -77,12 +81,20 @@ export default function Home() {
               Base de Conocimiento Corporativa
             </p>
           </div>
-          <div className="flex items-center gap-2 bg-slate-800 px-3 py-1 rounded-full border border-slate-700">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-            </span>
-            <span className="text-emerald-400 text-xs font-medium">Sistema Operativo</span>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsDocumentsPanelOpen(true)}
+              className="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs px-3 py-1.5 rounded-full border border-slate-700 transition-colors"
+            >
+              📁 Documentos
+            </button>
+            <div className="flex items-center gap-2 bg-slate-800 px-3 py-1 rounded-full border border-slate-700">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+              </span>
+              <span className="text-emerald-400 text-xs font-medium">Sistema Operativo</span>
+            </div>
           </div>
         </header>
 
@@ -90,10 +102,11 @@ export default function Home() {
           {messages.map((msg, index) => (
             <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
               <div
-                className={`max-w-[85%] p-4 rounded-xl shadow-sm whitespace-pre-wrap text-[15px] leading-relaxed ${msg.role === 'user'
+                className={`max-w-[85%] p-4 rounded-xl shadow-sm whitespace-pre-wrap text-[15px] leading-relaxed ${
+                  msg.role === 'user'
                     ? 'bg-blue-600 text-white rounded-br-none'
                     : 'bg-white text-slate-700 border border-slate-200 rounded-bl-none'
-                  }`}
+                }`}
               >
                 {msg.content}
               </div>
@@ -132,6 +145,10 @@ export default function Home() {
           </form>
         </div>
       </div>
+
+      {isDocumentsPanelOpen && (
+        <DocumentsPanel apiBaseUrl={API_BASE_URL} onClose={() => setIsDocumentsPanelOpen(false)} />
+      )}
     </main>
   );
 }
