@@ -10,7 +10,7 @@ import { EmbeddedChunk, VectorStoreService } from './vector-store.service';
 export class KnowledgeService implements OnModuleInit {
   private readonly logger = new Logger(KnowledgeService.name);
   private indexingPromise: Promise<void> | null = null;
-
+  private lastIndexedAt: Date | null = null;
   private readonly TOP_K = 6;
   private readonly MAX_CHUNK_CHARS = 800;
 
@@ -36,6 +36,8 @@ export class KnowledgeService implements OnModuleInit {
     this.logger.log(
       'Construyendo índice vectorial de la Base de Conocimiento...',
     );
+
+    this.lastIndexedAt = new Date();
 
     const kbPath = path.resolve(process.cwd(), '../knowledge_base');
     const files = await fsPromises.readdir(kbPath, { withFileTypes: true });
@@ -138,5 +140,14 @@ export class KnowledgeService implements OnModuleInit {
     this.indexingPromise = null;
     this.vectorStore.index([]);
     await this.ensureIndex();
+  }
+
+  getStatus() {
+    return {
+      documentsIndexed: this.vectorStore.getUniqueFileNames().length,
+      chunksIndexed: this.vectorStore.count(),
+      lastIndexedAt: this.lastIndexedAt,
+      embeddingModel: this.embeddingService.getModelName(),
+    };
   }
 }

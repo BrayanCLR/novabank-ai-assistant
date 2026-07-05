@@ -28,6 +28,10 @@ export class EmbeddingService {
     );
   }
 
+  getModelName(): string {
+    return this.modelName;
+  }
+
   async embed(text: string, taskType: EmbeddingTaskType): Promise<number[]> {
     try {
       const result = await this.client.models.embedContent({

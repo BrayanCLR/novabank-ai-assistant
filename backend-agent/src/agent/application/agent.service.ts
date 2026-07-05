@@ -49,4 +49,13 @@ export class AgentService {
       );
     }
   }
+
+  getStatus() {
+    const knowledge = this.knowledgeService.getStatus();
+    return {
+      status: 'ok' as const,
+      ...knowledge,
+      generationModel: this.geminiService.getModelName(),
+    };
+  }
 }

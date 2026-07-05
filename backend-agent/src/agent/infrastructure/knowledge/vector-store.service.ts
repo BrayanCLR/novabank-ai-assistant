@@ -14,7 +14,9 @@ export class VectorStoreService {
 
   index(chunks: EmbeddedChunk[]): void {
     this.chunks = chunks;
-    this.logger.log(`Índice vectorial construido con ${chunks.length} chunk(s).`);
+    this.logger.log(
+      `Índice vectorial construido con ${chunks.length} chunk(s).`,
+    );
   }
 
   isIndexed(): boolean {
@@ -45,5 +47,13 @@ export class VectorStoreService {
 
     if (normA === 0 || normB === 0) return 0;
     return dot / (Math.sqrt(normA) * Math.sqrt(normB));
+  }
+
+  count(): number {
+    return this.chunks.length;
+  }
+
+  getUniqueFileNames(): string[] {
+    return [...new Set(this.chunks.map((c) => c.fileName))];
   }
 }

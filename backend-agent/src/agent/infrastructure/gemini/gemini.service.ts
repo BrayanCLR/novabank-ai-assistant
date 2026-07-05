@@ -32,8 +32,8 @@ export class GeminiService {
     );
 
     if (!apiKey) {
-      // Do not throw in constructor to avoid crashing the whole app at startup.
-      // Service will report unavailable when called.
+      // No lanzar una excepción en el constructor para evitar que toda la aplicación se bloquee al iniciar.
+      // El servicio reportará que no está disponible cuando sea llamado.
       this.client = undefined;
       this.logger.warn(
         'GEMINI_API_KEY no encontrada; GeminiService deshabilitado (modo seguro).',
@@ -45,6 +45,10 @@ export class GeminiService {
     this.logger.log(
       'GeminiService inicializado y conectado a la API de Google',
     );
+  }
+
+  getModelName(): string {
+    return this.modelName;
   }
 
   async ask(prompt: string): Promise<string> {

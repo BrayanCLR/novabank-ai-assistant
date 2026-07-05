@@ -8,11 +8,13 @@ import { Transform } from 'class-transformer';
  */
 export class AskQuestionDto {
   @IsString()
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
   @IsNotEmpty({ message: 'El mensaje no puede estar vacío.' })
   @MinLength(3, { message: 'El mensaje es demasiado corto.' })
   @MaxLength(1000, {
     message: 'El mensaje es demasiado largo (máx. 1000 caracteres).',
   })
-  mensaje: string;
+  mensaje!: string;
 }
