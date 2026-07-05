@@ -82,7 +82,37 @@ export default function KnowledgeSection() {
   };
 
   const formatSize = (bytes: number) => bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(1)} KB`;
+  const getExtensionColor = (extension: string) => {
+    const ext = extension.replace('.', '').trim().toLowerCase();
 
+    switch (ext) {
+      case 'pdf':
+        return 'bg-red-500/20 text-red-400 border-red-500/30';
+
+      case 'doc':
+      case 'docx':
+        return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+
+      case 'xls':
+      case 'xlsx':
+        return 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30';
+
+      case 'csv':
+        return 'bg-lime-500/20 text-lime-400 border-lime-500/30';
+
+      case 'json':
+        return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
+
+      case 'md':
+        return 'bg-violet-500/20 text-violet-400 border-violet-500/30';
+
+      case 'html':
+        return 'bg-orange-500/20 text-orange-400 border-orange-500/30';
+
+      default:
+        return 'bg-zinc-700/20 text-zinc-300 border-zinc-600';
+    }
+  };
   return (
     <div className="flex flex-col h-full overflow-y-auto p-4 md:p-8 custom-scrollbar relative">
       <div className="max-w-5xl mx-auto w-full">
@@ -126,8 +156,24 @@ export default function KnowledgeSection() {
                     <FileText className="w-6 h-6 text-zinc-500 group-hover:text-orange-500" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-bold text-zinc-200 truncate" title={doc.fileName}>{doc.fileName}</p>
-                    <p className="text-[11px] text-zinc-500 font-mono tracking-widest uppercase mt-0.5">{formatSize(doc.sizeBytes)}</p>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <p
+                        className="text-sm font-bold text-zinc-200 truncate"
+                        title={doc.fileName}
+                      >
+                        {doc.fileName.replace(/\.[^/.]+$/, '')}
+                      </p>
+
+                      <span
+                        className={`px-2 py-0.5 rounded-md border text-[10px] font-bold uppercase tracking-wider ${getExtensionColor(doc.extension)}`}
+                      >
+                        {doc.extension.toUpperCase()}
+                      </span>
+                    </div>
+
+                    <p className="text-[11px] text-zinc-500 font-mono tracking-widest uppercase mt-1">
+                      {formatSize(doc.sizeBytes)}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex-shrink-0">
@@ -137,6 +183,7 @@ export default function KnowledgeSection() {
                   <button onClick={() => setDocumentToDelete(doc.fileName)} title="Eliminar" className="p-2 text-zinc-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors">
                     <Trash2 className="w-5 h-5" />
                   </button>
+
                 </div>
               </li>
             ))}
