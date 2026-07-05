@@ -51,7 +51,7 @@ export class AgentController {
    * "Unexpected await of a non-Promise value"
    */
   @Get('status')
-  getStatus(): AgentStatusResponse {
+  async getStatus(): Promise<AgentStatusResponse> {
     return this.agentService.getStatus();
   }
 }

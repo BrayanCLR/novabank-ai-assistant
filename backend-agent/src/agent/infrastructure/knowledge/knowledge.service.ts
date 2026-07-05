@@ -10,10 +10,11 @@ import { EmbeddedChunk, VectorStoreService } from './vector-store.service';
 export class KnowledgeService implements OnModuleInit {
   private readonly logger = new Logger(KnowledgeService.name);
   private indexingPromise: Promise<void> | null = null;
+  private indexReady = false; // evita golpear la DB solo para chequear "¿ya indexó?"
   private lastIndexedAt: Date | null = null;
+
   private readonly TOP_K = 6;
   private readonly MAX_CHUNK_CHARS = 800;
-  private readonly INDEXING_TIMEOUT_MS = 2000;
 
   constructor(
     private readonly parser: UniversalParser,
@@ -25,126 +26,90 @@ export class KnowledgeService implements OnModuleInit {
     await this.ensureIndex();
   }
 
-  private async ensureIndex(waitForCompletion = false): Promise<void> {
-    if (this.vectorStore.isIndexed()) return;
-
+  private async ensureIndex(): Promise<void> {
+    if (this.indexReady) return;
     if (!this.indexingPromise) {
-      this.indexingPromise = this.buildIndex().catch((error) => {
-        this.logger.error(
-          'La indexación de conocimiento falló.',
-          error as Error,
-        );
-        throw error;
-      });
+      this.indexingPromise = this.buildIndex();
     }
-
-    if (!waitForCompletion) return;
-
-    try {
-      await Promise.race([
-        this.indexingPromise,
-        new Promise<never>((_, reject) => {
-          setTimeout(() => {
-            reject(new Error('Índice aún en construcción'));
-          }, this.INDEXING_TIMEOUT_MS);
-        }),
-      ]);
-    } catch {
-      this.logger.warn(
-        'La indexación sigue en segundo plano; se continúa con una respuesta sin contexto listo.',
-      );
-    }
+    await this.indexingPromise;
   }
 
   private async buildIndex(): Promise<void> {
+    this.logger.log('Construyendo índice vectorial en Oracle Database...');
+
+    const kbPath = path.resolve(process.cwd(), '../knowledge_base');
+    const files = await fsPromises.readdir(kbPath, { withFileTypes: true });
+
+    const validFiles = files
+      .filter(
+        (file) =>
+          file.isFile() &&
+          this.parser.supportedExtensions.includes(
+            path.extname(file.name).toLowerCase(),
+          ),
+      )
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    const allChunks: { text: string; fileName: string; chunkIndex: number }[] =
+      [];
+
+    for (const file of validFiles) {
+      const filePath = path.join(kbPath, file.name);
+      try {
+        const parsed = await this.parser.parse(filePath);
+        if (!parsed.text?.trim()) {
+          this.logger.warn(
+            `${file.name} no contiene texto extraíble, se omite.`,
+          );
+          continue;
+        }
+
+        const pieces = chunkText(parsed.text, this.MAX_CHUNK_CHARS);
+        pieces.forEach((piece, index) => {
+          allChunks.push({
+            text: piece,
+            fileName: file.name,
+            chunkIndex: index,
+          });
+        });
+      } catch (error) {
+        this.logger.error(
+          `Error procesando ${file.name} durante la indexación`,
+          error as Error,
+        );
+      }
+    }
+
+    if (allChunks.length === 0) {
+      this.logger.warn(
+        'No se generó ningún chunk. El agente responderá sin contexto.',
+      );
+      return;
+    }
+
     this.logger.log(
-      'Construyendo índice vectorial de la Base de Conocimiento...',
+      `Generando embeddings para ${allChunks.length} chunk(s)...`,
     );
 
+    const embeddings = await this.embeddingService.embedBatch(
+      allChunks.map((c) => c.text),
+      'RETRIEVAL_DOCUMENT',
+    );
+
+    const embeddedChunks: EmbeddedChunk[] = allChunks.map((chunk, i) => ({
+      ...chunk,
+      embedding: embeddings[i],
+    }));
+
+    await this.vectorStore.index(embeddedChunks);
+    this.indexReady = true;
     this.lastIndexedAt = new Date();
-
-    try {
-      const kbPath = path.resolve(process.cwd(), '../knowledge_base');
-      const files = await fsPromises.readdir(kbPath, { withFileTypes: true });
-
-      const validFiles = files
-        .filter(
-          (file) =>
-            file.isFile() &&
-            this.parser.supportedExtensions.includes(
-              path.extname(file.name).toLowerCase(),
-            ),
-        )
-        .sort((a, b) => a.name.localeCompare(b.name));
-
-      const allChunks: {
-        text: string;
-        fileName: string;
-        chunkIndex: number;
-      }[] = [];
-
-      for (const file of validFiles) {
-        const filePath = path.join(kbPath, file.name);
-        try {
-          const parsed = await this.parser.parse(filePath);
-
-          if (!parsed.text?.trim()) {
-            this.logger.warn(
-              `${file.name} no contiene texto extraíble, se omite.`,
-            );
-            continue;
-          }
-
-          const pieces = chunkText(parsed.text, this.MAX_CHUNK_CHARS);
-          pieces.forEach((piece, index) => {
-            allChunks.push({
-              text: piece,
-              fileName: file.name,
-              chunkIndex: index,
-            });
-          });
-
-          this.logger.debug(`${file.name} -> ${pieces.length} chunk(s)`);
-        } catch (error) {
-          this.logger.error(
-            `Error procesando ${file.name} durante la indexación`,
-            error as Error,
-          );
-        }
-      }
-
-      if (allChunks.length === 0) {
-        this.logger.warn(
-          'No se generó ningún chunk. El agente responderá sin contexto.',
-        );
-        this.vectorStore.index([]);
-        return;
-      }
-
-      this.logger.log(
-        `Generando embeddings para ${allChunks.length} chunk(s)...`,
-      );
-
-      const embeddings = await this.embeddingService.embedBatch(
-        allChunks.map((c) => c.text),
-        'RETRIEVAL_DOCUMENT',
-      );
-
-      const embeddedChunks: EmbeddedChunk[] = allChunks.map((chunk, i) => ({
-        ...chunk,
-        embedding: embeddings[i],
-      }));
-
-      this.vectorStore.index(embeddedChunks);
-    } finally {
-      this.indexingPromise = null;
-    }
   }
 
   async getRelevantContext(query: string): Promise<string> {
-    await this.ensureIndex(true);
+    await this.ensureIndex();
 
-    if (!this.vectorStore.isIndexed()) {
+    if (!this.indexReady) {
       return '';
     }
 
@@ -152,7 +117,10 @@ export class KnowledgeService implements OnModuleInit {
       query,
       'RETRIEVAL_QUERY',
     );
-    const relevantChunks = this.vectorStore.search(queryEmbedding, this.TOP_K);
+    const relevantChunks = await this.vectorStore.search(
+      queryEmbedding,
+      this.TOP_K,
+    );
 
     this.logger.debug(
       `Chunks recuperados: ` +
@@ -170,14 +138,19 @@ export class KnowledgeService implements OnModuleInit {
 
   async reindex(): Promise<void> {
     this.indexingPromise = null;
-    this.vectorStore.index([]);
-    await this.ensureIndex(true);
+    this.indexReady = false;
+    await this.ensureIndex();
   }
 
-  getStatus() {
+  async getStatus() {
+    const [documentsIndexed, chunksIndexed] = await Promise.all([
+      this.vectorStore.getUniqueFileNames(),
+      this.vectorStore.count(),
+    ]);
+
     return {
-      documentsIndexed: this.vectorStore.getUniqueFileNames().length,
-      chunksIndexed: this.vectorStore.count(),
+      documentsIndexed: documentsIndexed.length,
+      chunksIndexed,
       lastIndexedAt: this.lastIndexedAt,
       embeddingModel: this.embeddingService.getModelName(),
     };

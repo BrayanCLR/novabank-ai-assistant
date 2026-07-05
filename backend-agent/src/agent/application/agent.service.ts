@@ -29,10 +29,16 @@ export class AgentService {
 
     this.logger.log('2. Construyendo el prompt corporativo...');
     const prompt = buildNovaBankPrompt(context, userMessage);
+    const fallbackPrompt = `
+Si la información solicitada no aparece claramente en la documentación proporcionada, no respondas con un cierre automático tipo "no dispongo de información".
+En su lugar, ofrece una respuesta breve, prudente y orientadora, indicando que la documentación actual no contiene una política específica y que la consulta debe validarse con el canal oficial o con un documento adicional para el RAG.
+
+${prompt}
+`;
 
     this.logger.log('3. Enviando consulta al modelo Gemini...');
     try {
-      const response = await this.geminiService.ask(prompt);
+      const response = await this.geminiService.ask(fallbackPrompt);
       this.logger.log('4. Respuesta generada correctamente.');
       return response;
     } catch (error) {
@@ -47,8 +53,8 @@ export class AgentService {
     }
   }
 
-  getStatus() {
-    const knowledge = this.knowledgeService.getStatus();
+  async getStatus() {
+    const knowledge = await this.knowledgeService.getStatus();
     return {
       status: 'ok' as const,
       ...knowledge,

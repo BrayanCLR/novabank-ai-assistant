@@ -8,6 +8,7 @@ import { KnowledgeService } from './infrastructure/knowledge/knowledge.service';
 import { VectorStoreService } from './infrastructure/knowledge/vector-store.service';
 import { UniversalParser } from './infrastructure/parsers/universal.parser';
 import { DocumentsController } from './controller/documents.controller';
+import { OracleConnectionService } from './infrastructure/database/oracle-connection.service';
 
 @Module({
   imports: [ConfigModule],
@@ -19,6 +20,7 @@ import { DocumentsController } from './controller/documents.controller';
     KnowledgeService,
     VectorStoreService,
     UniversalParser,
+    OracleConnectionService,
   ],
 })
 export class AgentModule {}

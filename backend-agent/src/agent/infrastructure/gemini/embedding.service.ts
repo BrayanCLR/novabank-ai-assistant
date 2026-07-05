@@ -68,7 +68,7 @@ export class EmbeddingService {
         this.client.models.embedContent({
           model: this.modelName,
           contents: text,
-          config: { taskType },
+          config: { taskType, outputDimensionality: 768 },
         }),
         'Generación de embedding',
       );
@@ -95,7 +95,7 @@ export class EmbeddingService {
         this.client.models.embedContent({
           model: this.modelName,
           contents: texts,
-          config: { taskType },
+          config: { taskType, outputDimensionality: 768 },
         }),
         'Generación de embeddings en lote',
       );
