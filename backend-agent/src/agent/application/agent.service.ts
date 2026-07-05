@@ -22,11 +22,8 @@ export class AgentService {
     const context = await this.knowledgeService.getRelevantContext(userMessage);
 
     if (!context?.trim()) {
-      this.logger.error(
-        'No se encontró contexto relevante en la base de conocimiento.',
-      );
-      throw new InternalServerErrorException(
-        'No se pudo acceder a la base de conocimiento corporativa.',
+      this.logger.warn(
+        'No se encontró contexto relevante en la base de conocimiento; se continúa con una respuesta de respaldo.',
       );
     }
 

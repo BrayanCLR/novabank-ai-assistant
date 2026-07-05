@@ -13,6 +13,7 @@ export class KnowledgeService implements OnModuleInit {
   private lastIndexedAt: Date | null = null;
   private readonly TOP_K = 6;
   private readonly MAX_CHUNK_CHARS = 800;
+  private readonly INDEXING_TIMEOUT_MS = 2000;
 
   constructor(
     private readonly parser: UniversalParser,
@@ -24,12 +25,35 @@ export class KnowledgeService implements OnModuleInit {
     await this.ensureIndex();
   }
 
-  private async ensureIndex(): Promise<void> {
+  private async ensureIndex(waitForCompletion = false): Promise<void> {
     if (this.vectorStore.isIndexed()) return;
+
     if (!this.indexingPromise) {
-      this.indexingPromise = this.buildIndex();
+      this.indexingPromise = this.buildIndex().catch((error) => {
+        this.logger.error(
+          'La indexación de conocimiento falló.',
+          error as Error,
+        );
+        throw error;
+      });
     }
-    await this.indexingPromise;
+
+    if (!waitForCompletion) return;
+
+    try {
+      await Promise.race([
+        this.indexingPromise,
+        new Promise<never>((_, reject) => {
+          setTimeout(() => {
+            reject(new Error('Índice aún en construcción'));
+          }, this.INDEXING_TIMEOUT_MS);
+        }),
+      ]);
+    } catch {
+      this.logger.warn(
+        'La indexación sigue en segundo plano; se continúa con una respuesta sin contexto listo.',
+      );
+    }
   }
 
   private async buildIndex(): Promise<void> {
@@ -39,78 +63,86 @@ export class KnowledgeService implements OnModuleInit {
 
     this.lastIndexedAt = new Date();
 
-    const kbPath = path.resolve(process.cwd(), '../knowledge_base');
-    const files = await fsPromises.readdir(kbPath, { withFileTypes: true });
+    try {
+      const kbPath = path.resolve(process.cwd(), '../knowledge_base');
+      const files = await fsPromises.readdir(kbPath, { withFileTypes: true });
 
-    const validFiles = files
-      .filter(
-        (file) =>
-          file.isFile() &&
-          this.parser.supportedExtensions.includes(
-            path.extname(file.name).toLowerCase(),
-          ),
-      )
-      .sort((a, b) => a.name.localeCompare(b.name));
+      const validFiles = files
+        .filter(
+          (file) =>
+            file.isFile() &&
+            this.parser.supportedExtensions.includes(
+              path.extname(file.name).toLowerCase(),
+            ),
+        )
+        .sort((a, b) => a.name.localeCompare(b.name));
 
-    const allChunks: { text: string; fileName: string; chunkIndex: number }[] =
-      [];
+      const allChunks: {
+        text: string;
+        fileName: string;
+        chunkIndex: number;
+      }[] = [];
 
-    for (const file of validFiles) {
-      const filePath = path.join(kbPath, file.name);
-      try {
-        const parsed = await this.parser.parse(filePath);
+      for (const file of validFiles) {
+        const filePath = path.join(kbPath, file.name);
+        try {
+          const parsed = await this.parser.parse(filePath);
 
-        if (!parsed.text?.trim()) {
-          this.logger.warn(
-            `${file.name} no contiene texto extraíble, se omite.`,
-          );
-          continue;
-        }
+          if (!parsed.text?.trim()) {
+            this.logger.warn(
+              `${file.name} no contiene texto extraíble, se omite.`,
+            );
+            continue;
+          }
 
-        const pieces = chunkText(parsed.text, this.MAX_CHUNK_CHARS);
-        pieces.forEach((piece, index) => {
-          allChunks.push({
-            text: piece,
-            fileName: file.name,
-            chunkIndex: index,
+          const pieces = chunkText(parsed.text, this.MAX_CHUNK_CHARS);
+          pieces.forEach((piece, index) => {
+            allChunks.push({
+              text: piece,
+              fileName: file.name,
+              chunkIndex: index,
+            });
           });
-        });
 
-        this.logger.debug(`${file.name} -> ${pieces.length} chunk(s)`);
-      } catch (error) {
-        this.logger.error(
-          `Error procesando ${file.name} durante la indexación`,
-          error as Error,
-        );
+          this.logger.debug(`${file.name} -> ${pieces.length} chunk(s)`);
+        } catch (error) {
+          this.logger.error(
+            `Error procesando ${file.name} durante la indexación`,
+            error as Error,
+          );
+        }
       }
-    }
 
-    if (allChunks.length === 0) {
-      this.logger.warn(
-        'No se generó ningún chunk. El agente responderá sin contexto.',
+      if (allChunks.length === 0) {
+        this.logger.warn(
+          'No se generó ningún chunk. El agente responderá sin contexto.',
+        );
+        this.vectorStore.index([]);
+        return;
+      }
+
+      this.logger.log(
+        `Generando embeddings para ${allChunks.length} chunk(s)...`,
       );
-      return;
+
+      const embeddings = await this.embeddingService.embedBatch(
+        allChunks.map((c) => c.text),
+        'RETRIEVAL_DOCUMENT',
+      );
+
+      const embeddedChunks: EmbeddedChunk[] = allChunks.map((chunk, i) => ({
+        ...chunk,
+        embedding: embeddings[i],
+      }));
+
+      this.vectorStore.index(embeddedChunks);
+    } finally {
+      this.indexingPromise = null;
     }
-
-    this.logger.log(
-      `Generando embeddings para ${allChunks.length} chunk(s)...`,
-    );
-
-    const embeddings = await this.embeddingService.embedBatch(
-      allChunks.map((c) => c.text),
-      'RETRIEVAL_DOCUMENT',
-    );
-
-    const embeddedChunks: EmbeddedChunk[] = allChunks.map((chunk, i) => ({
-      ...chunk,
-      embedding: embeddings[i],
-    }));
-
-    this.vectorStore.index(embeddedChunks);
   }
 
   async getRelevantContext(query: string): Promise<string> {
-    await this.ensureIndex();
+    await this.ensureIndex(true);
 
     if (!this.vectorStore.isIndexed()) {
       return '';
@@ -139,7 +171,7 @@ export class KnowledgeService implements OnModuleInit {
   async reindex(): Promise<void> {
     this.indexingPromise = null;
     this.vectorStore.index([]);
-    await this.ensureIndex();
+    await this.ensureIndex(true);
   }
 
   getStatus() {
