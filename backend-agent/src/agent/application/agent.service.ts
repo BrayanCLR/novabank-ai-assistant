@@ -5,7 +5,11 @@ import {
 } from '@nestjs/common';
 import { GeminiService } from '../infrastructure/gemini/gemini.service';
 import { KnowledgeService } from '../infrastructure/knowledge/knowledge.service';
-import { buildNovaBankPrompt } from '../infrastructure/prompts/corporate.prompt';
+import { ChatHistoryService } from '../infrastructure/knowledge/chat/chat-history.service';
+import {
+  NOVA_BANK_SYSTEM_INSTRUCTION,
+  buildRagMessage,
+} from '../infrastructure/prompts/corporate.prompt';
 
 @Injectable()
 export class AgentService {
@@ -14,32 +18,63 @@ export class AgentService {
   constructor(
     private readonly geminiService: GeminiService,
     private readonly knowledgeService: KnowledgeService,
+    private readonly chatHistoryService: ChatHistoryService,
   ) {}
 
-  async processQuery(userMessage: string): Promise<string> {
-    this.logger.log('1. Búsqueda semántica: recuperando chunks relevantes...');
+  async processQuery(userMessage: string, sessionId?: string): Promise<string> {
+    const normalizedSessionId = sessionId?.trim() || 'default';
+    this.logger.log(
+      `1. Iniciando procesamiento para la sesión: ${normalizedSessionId}`,
+    );
 
+    // A. Guardamos la nueva pregunta del usuario en Oracle antes de procesar
+    await this.chatHistoryService.saveMessage(
+      normalizedSessionId,
+      'user',
+      userMessage,
+    );
+
+    // B. Recuperamos la memoria a corto plazo de Oracle (ej. los últimos 7 mensajes)
+    // Extraemos el último (que acabamos de guardar) para no duplicarlo en la pregunta actual
+    const rawHistory = await this.chatHistoryService.getHistory(
+      normalizedSessionId,
+      7,
+    );
+    const priorHistory = rawHistory.slice(0, -1);
+    this.logger.log(
+      `2. Memoria recuperada: ${priorHistory.length} turnos previos extraídos de la base de datos.`,
+    );
+
+    // C. Búsqueda semántica (RAG) recuperando chunks relevantes
     const context = await this.knowledgeService.getRelevantContext(userMessage);
-
     if (!context?.trim()) {
       this.logger.warn(
-        'No se encontró contexto relevante en la base de conocimiento; se continúa con una respuesta de respaldo.',
+        'No se encontró contexto relevante en la base de conocimiento; se continúa con parámetros estándar.',
       );
     }
 
-    this.logger.log('2. Construyendo el prompt corporativo...');
-    const prompt = buildNovaBankPrompt(context, userMessage);
-    const fallbackPrompt = `
-Si la información solicitada no aparece claramente en la documentación proporcionada, no respondas con un cierre automático tipo "no dispongo de información".
-En su lugar, ofrece una respuesta breve, prudente y orientadora, indicando que la documentación actual no contiene una política específica y que la consulta debe validarse con el canal oficial o con un documento adicional para el RAG.
+    // D. Construimos el mensaje actual combinando los documentos recuperados y la pregunta
+    const currentMessageWithRag = buildRagMessage(context, userMessage);
 
-${prompt}
-`;
-
-    this.logger.log('3. Enviando consulta al modelo Gemini...');
+    this.logger.log(
+      '3. Enviando consulta al modelo GenAI con memoria y contexto RAG...',
+    );
     try {
-      const response = await this.geminiService.ask(fallbackPrompt);
-      this.logger.log('4. Respuesta generada correctamente.');
+      // E. Invocamos al SDK pasándole las instrucciones, la memoria de Oracle y la pregunta con contexto
+      const response = await this.geminiService.generateConversationalResponse(
+        NOVA_BANK_SYSTEM_INSTRUCTION,
+        priorHistory,
+        currentMessageWithRag,
+      );
+
+      // F. Guardamos la respuesta de la IA en Oracle
+      await this.chatHistoryService.saveMessage(
+        normalizedSessionId,
+        'agent',
+        response,
+      );
+
+      this.logger.log('4. Respuesta generada y guardada correctamente.');
       return response;
     } catch (error) {
       this.logger.error('Error obteniendo respuesta del modelo Gemini.', error);

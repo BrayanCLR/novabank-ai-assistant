@@ -1,4 +1,10 @@
-import { IsNotEmpty, IsString, MaxLength, MinLength } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 import { Transform } from 'class-transformer';
 
 /**
@@ -17,4 +23,8 @@ export class AskQuestionDto {
     message: 'El mensaje es demasiado largo (máx. 1000 caracteres).',
   })
   mensaje!: string;
+
+  @IsOptional()
+  @IsString()
+  sessionId?: string;
 }

@@ -25,8 +25,11 @@ interface AskAgentResponse {
  */
 interface AgentStatusResponse {
   status: string;
-  uptime?: number;
-  version?: string;
+  documentsIndexed: number;
+  chunksIndexed: number;
+  lastIndexedAt: string | null;
+  embeddingModel: string;
+  generationModel: string;
 }
 
 @Controller('agent')
@@ -39,7 +42,10 @@ export class AgentController {
   @Post('ask')
   @HttpCode(HttpStatus.OK)
   async askAgent(@Body() dto: AskQuestionDto): Promise<AskAgentResponse> {
-    const respuesta = await this.agentService.processQuery(dto.mensaje);
+    const respuesta = await this.agentService.processQuery(
+      dto.mensaje,
+      dto.sessionId,
+    );
 
     return { respuesta };
   }
@@ -47,11 +53,26 @@ export class AgentController {
   /**
    * Estado del sistema/agente
    *
-   * Se elimina `await` para evitar:
-   * "Unexpected await of a non-Promise value"
+   * Se añade `await` para asegurar que la promesa sea correctamente esperada.
    */
   @Get('status')
   async getStatus(): Promise<AgentStatusResponse> {
-    return this.agentService.getStatus();
+    const {
+      status,
+      documentsIndexed,
+      chunksIndexed,
+      lastIndexedAt,
+      embeddingModel,
+      generationModel,
+    } = await this.agentService.getStatus();
+
+    return {
+      status,
+      documentsIndexed,
+      chunksIndexed,
+      lastIndexedAt: lastIndexedAt?.toISOString() ?? null,
+      embeddingModel,
+      generationModel,
+    };
   }
 }

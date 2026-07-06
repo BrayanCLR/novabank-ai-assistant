@@ -9,6 +9,7 @@ import { VectorStoreService } from './infrastructure/knowledge/vector-store.serv
 import { UniversalParser } from './infrastructure/parsers/universal.parser';
 import { DocumentsController } from './controller/documents.controller';
 import { OracleConnectionService } from './infrastructure/database/oracle-connection.service';
+import { ChatHistoryService } from './infrastructure/knowledge/chat/chat-history.service';
 
 @Module({
   imports: [ConfigModule],
@@ -21,6 +22,7 @@ import { OracleConnectionService } from './infrastructure/database/oracle-connec
     VectorStoreService,
     UniversalParser,
     OracleConnectionService,
+    ChatHistoryService,
   ],
 })
 export class AgentModule {}

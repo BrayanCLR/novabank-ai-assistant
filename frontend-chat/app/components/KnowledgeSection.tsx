@@ -134,7 +134,8 @@ export default function KnowledgeSection() {
           <span className="text-base font-bold text-zinc-300 group-hover:text-white transition-colors">
             {isUploading ? 'INDEXANDO VECTOR...' : 'CARGAR NUEVO CONOCIMIENTO'}
           </span>
-          <span className="text-xs text-zinc-600 mt-2 font-mono uppercase tracking-widest">PDF, DOCX, XLSX, JSON, CSV, MD</span>
+          <span className="text-xs text-zinc-600 mt-2 font-mono uppercase tracking-widest">TIPOS SOPORTADOS:</span>
+          <span className="text-xs text-zinc-600 mt-2 font-mono uppercase tracking-widest">TXT, HTML, JSON, DOCX, XLSX, MD, PDF, PPTX, CSV</span>
           <input type="file" className="hidden" onChange={handleUpload} disabled={isUploading} accept=".pdf,.docx,.xlsx,.pptx,.csv,.json,.txt,.html,.md" />
         </label>
 

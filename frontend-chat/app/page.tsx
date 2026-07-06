@@ -8,16 +8,23 @@ import StatusSection from './components/StatusSection';
 import { API_BASE_URL } from './lib/config';
 
 type SectionId = 'chat' | 'knowledge' | 'status';
+type Message = { role: 'user' | 'agent'; content: string };
 
 const NAV_ITEMS: { id: SectionId; label: string; icon: typeof Bot }[] = [
   { id: 'chat', label: 'Centro de Mando', icon: Bot },
-  { id: 'knowledge', label: 'Base Vectorial', icon: Database },
+  { id: 'knowledge', label: 'Base de Conocimiento', icon: Database },
   { id: 'status', label: 'Monitoreo RAG', icon: Activity },
 ];
 
 export default function NovaBankDashboard() {
   const [activeSection, setActiveSection] = useState<SectionId>('chat');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      role: 'agent',
+      content: 'Bienvenido al Centro de Mando de NovaBank. Soy tu agente RAG de Compliance. ¿En qué te puedo ayudar hoy?',
+    },
+  ]);
 
   return (
     <div className="flex h-screen bg-[#09090b] text-zinc-300 overflow-hidden font-sans selection:bg-orange-500/30">
@@ -145,7 +152,7 @@ export default function NovaBankDashboard() {
 
         {/* SECCIÓN ACTIVA */}
         <div className="flex-1 overflow-hidden relative z-0 w-full">
-          {activeSection === 'chat' && <ChatSection />}
+          {activeSection === 'chat' && <ChatSection messages={messages} setMessages={setMessages} />}
           {activeSection === 'knowledge' && <KnowledgeSection />}
           {activeSection === 'status' && <StatusSection />}
         </div>

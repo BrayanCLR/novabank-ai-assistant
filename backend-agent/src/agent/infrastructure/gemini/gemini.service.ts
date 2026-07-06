@@ -5,14 +5,8 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI, Content } from '@google/genai';
 
-/**
- * RF-05: genera respuestas usando Google Gemini.
- * Migrado de @google/generative-ai (muerto desde nov-2025) a @google/genai,
- * el SDK unificado y soportado actualmente. Mismo método público ask(prompt)
- * que ya tenías, así que agent.service.ts no necesita ningún cambio.
- */
 @Injectable()
 export class GeminiService {
   private readonly logger = new Logger(GeminiService.name);
@@ -20,11 +14,9 @@ export class GeminiService {
   private readonly modelName: string;
 
   constructor(private readonly configService: ConfigService) {
-    // Prefer explicit GEMINI_API_KEY but allow GOOGLE_API_KEY as a fallback
     const apiKey =
       this.configService.get<string>('GEMINI_API_KEY') ??
-      process.env.GOOGLE_API_KEY ??
-      undefined;
+      process.env.GOOGLE_API_KEY;
 
     this.modelName = this.configService.get<string>(
       'GEMINI_MODEL',
@@ -32,48 +24,92 @@ export class GeminiService {
     );
 
     if (!apiKey) {
-      // No lanzar una excepción en el constructor para evitar que toda la aplicación se bloquee al iniciar.
-      // El servicio reportará que no está disponible cuando sea llamado.
-      this.client = undefined;
       this.logger.warn(
         'GEMINI_API_KEY no encontrada; GeminiService deshabilitado (modo seguro).',
       );
+      this.client = undefined;
       return;
     }
 
     this.client = new GoogleGenAI({ apiKey });
-    this.logger.log(
-      'GeminiService inicializado y conectado a la API de Google',
-    );
+
+    this.logger.log('GeminiService inicializado (Google GenAI SDK)');
   }
 
   getModelName(): string {
     return this.modelName;
   }
 
+  /**
+   * 🔹 MODO SIMPLE (compatibilidad con tu agent actual)
+   */
   async ask(prompt: string): Promise<string> {
     try {
-      this.logger.log('Enviando consulta al LLM...');
       if (!this.client) {
-        throw new ServiceUnavailableException(
-          'Modelo de IA no disponible. Revisa la configuración de GEMINI_API_KEY.',
-        );
+        throw new ServiceUnavailableException('Modelo de IA no disponible.');
       }
 
       const response = await this.client.models.generateContent({
         model: this.modelName,
         contents: prompt,
       });
+
       return response.text ?? '';
     } catch (error) {
-      // Log stack if available for easier debugging in prod
       this.logger.error(
-        'Error de comunicación con Gemini',
+        'Error en ask() Gemini',
         (error as Error).stack ?? String(error),
       );
+
       if (error instanceof ServiceUnavailableException) throw error;
+
       throw new InternalServerErrorException(
-        'No fue posible comunicarse con el modelo de IA en este momento.',
+        'No fue posible comunicarse con el modelo de IA.',
+      );
+    }
+  }
+
+  /**
+   * 🔹 MODO CHAT (RAG + memoria)
+   */
+  async generateConversationalResponse(
+    systemInstruction: string,
+    history: { role: string; content: string }[],
+    currentMessage: string,
+  ): Promise<string> {
+    try {
+      if (!this.client) {
+        throw new ServiceUnavailableException('Modelo de IA no disponible.');
+      }
+
+      const formattedHistory: Content[] = history.map((msg) => ({
+        role: msg.role === 'agent' ? 'model' : 'user',
+        parts: [{ text: msg.content }],
+      }));
+
+      const chat = this.client.chats.create({
+        model: this.modelName,
+        config: {
+          systemInstruction,
+        },
+        history: formattedHistory,
+      });
+
+      const response = await chat.sendMessage({
+        message: currentMessage,
+      });
+
+      return response.text ?? '';
+    } catch (error) {
+      this.logger.error(
+        'Error en chat Gemini',
+        (error as Error).stack ?? String(error),
+      );
+
+      if (error instanceof ServiceUnavailableException) throw error;
+
+      throw new InternalServerErrorException(
+        'No fue posible comunicarse con el modelo de IA.',
       );
     }
   }
