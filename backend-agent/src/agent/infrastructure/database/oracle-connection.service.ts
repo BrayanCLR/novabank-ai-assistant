@@ -25,6 +25,9 @@ type OraclePoolOptions = {
   poolMin: number;
   poolMax: number;
   poolIncrement: number;
+  configDir?: string;
+  walletLocation?: string;
+  walletPassword?: string;
 };
 
 type OracleModuleLike = {
@@ -51,6 +54,15 @@ export class OracleConnectionService implements OnModuleInit, OnModuleDestroy {
       'localhost:1521/FREEPDB1',
     );
 
+    // Nuevas: solo existen en producción (Autonomous Database).
+    // En local, estas quedan undefined y el wallet simplemente no se usa.
+    const walletLocation = this.configService.get<string>(
+      'ORACLE_WALLET_LOCATION',
+    );
+    const walletPassword = this.configService.get<string>(
+      'ORACLE_WALLET_PASSWORD',
+    );
+
     if (!password) {
       throw new Error(
         'CRÍTICO: ORACLE_PASSWORD no está configurada en el .env',
@@ -72,6 +84,11 @@ export class OracleConnectionService implements OnModuleInit, OnModuleDestroy {
       poolMin: 1,
       poolMax: 5,
       poolIncrement: 1,
+      ...(walletLocation && {
+        configDir: walletLocation,
+        walletLocation,
+        walletPassword,
+      }),
     });
 
     this.logger.log(`Pool de conexiones Oracle creado (${connectString})`);
