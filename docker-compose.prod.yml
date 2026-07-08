@@ -14,7 +14,7 @@ services:
       - ORACLE_WALLET_PASSWORD=${ORACLE_WALLET_PASSWORD}
     volumes:
       - ./oracle_wallet:/opt/oracle/wallet:ro
-      - ./knowledge_base:/opt/novabank/knowledge_base
+      - ./knowledge_base:/knowledge_base    # <- corregido: antes decía /opt/novabank/knowledge_base
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/agent/status', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
       interval: 15s
