@@ -35,7 +35,6 @@ export class AgentService {
     );
 
     // B. Recuperamos la memoria a corto plazo de Oracle (ej. los últimos 7 mensajes)
-    // Extraemos el último (que acabamos de guardar) para no duplicarlo en la pregunta actual
     const rawHistory = await this.chatHistoryService.getHistory(
       normalizedSessionId,
       7,
@@ -45,29 +44,40 @@ export class AgentService {
       `2. Memoria recuperada: ${priorHistory.length} turnos previos extraídos de la base de datos.`,
     );
 
-    // C. Búsqueda semántica (RAG) recuperando chunks relevantes
-    const context = await this.knowledgeService.getRelevantContext(userMessage);
+    // C. Búsqueda semántica (RAG): se enriquece con el último intercambio
+    // para que preguntas cortas o de seguimiento ("seguro?", "¿y en pesos?")
+    // hereden el tema de la conversación en vez de buscarse solas y a ciegas.
+    const lastExchange = priorHistory
+      .slice(-2)
+      .map((h) => h.content)
+      .join(' ');
+    const retrievalQuery = lastExchange
+      ? `${lastExchange} ${userMessage}`
+      : userMessage;
+
+    const context =
+      await this.knowledgeService.getRelevantContext(retrievalQuery);
     if (!context?.trim()) {
       this.logger.warn(
         'No se encontró contexto relevante en la base de conocimiento; se continúa con parámetros estándar.',
       );
     }
 
-    // D. Construimos el mensaje actual combinando los documentos recuperados y la pregunta
+    // D. Construimos el mensaje actual combinando los documentos recuperados
+    // y la pregunta ORIGINAL (no la enriquecida — Gemini debe ver tu
+    // pregunta tal cual la escribiste, solo la búsqueda usa la versión ampliada)
     const currentMessageWithRag = buildRagMessage(context, userMessage);
 
     this.logger.log(
       '3. Enviando consulta al modelo GenAI con memoria y contexto RAG...',
     );
     try {
-      // E. Invocamos al SDK pasándole las instrucciones, la memoria de Oracle y la pregunta con contexto
       const response = await this.geminiService.generateConversationalResponse(
         NOVA_BANK_SYSTEM_INSTRUCTION,
         priorHistory,
         currentMessageWithRag,
       );
 
-      // F. Guardamos la respuesta de la IA en Oracle
       await this.chatHistoryService.saveMessage(
         normalizedSessionId,
         'agent',
