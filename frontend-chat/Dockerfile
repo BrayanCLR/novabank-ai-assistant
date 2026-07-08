@@ -1,6 +1,12 @@
 # ---- Etapa 1: build ----
 FROM node:20-alpine AS builder
 WORKDIR /app
+
+# Necesario ANTES del build: Next.js hornea NEXT_PUBLIC_* en el bundle
+# del navegador durante "npm run build", no en tiempo de ejecución.
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
 COPY package*.json ./
 RUN npm ci
 COPY . .
