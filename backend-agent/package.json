@@ -28,6 +28,8 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
     "multer": "^2.2.0",
+    "oci-common": "^2.136.1",
+    "oci-objectstorage": "^2.136.1",
     "officeparser": "^7.2.3",
     "oracledb": "^7.0.0",
     "reflect-metadata": "^0.2.2",
