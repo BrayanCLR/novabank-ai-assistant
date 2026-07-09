@@ -12,11 +12,18 @@ services:
       - ORACLE_CONNECT_STRING=${ORACLE_CONNECT_STRING}
       - ORACLE_WALLET_LOCATION=/opt/oracle/wallet
       - ORACLE_WALLET_PASSWORD=${ORACLE_WALLET_PASSWORD}
+      - OCI_BUCKET_NAME=${OCI_BUCKET_NAME}
     volumes:
       - ./oracle_wallet:/opt/oracle/wallet:ro
-      - ./knowledge_base:/knowledge_base    # <- corregido: antes decía /opt/novabank/knowledge_base
+      - ./knowledge_base:/knowledge_base
     healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/agent/status', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "require('http').get('http://localhost:3000/agent/status', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))",
+        ]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -30,7 +37,7 @@ services:
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
     environment:
-    - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
     restart: unless-stopped
 
   nginx:
