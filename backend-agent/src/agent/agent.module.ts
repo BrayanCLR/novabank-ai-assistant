@@ -10,6 +10,7 @@ import { UniversalParser } from './infrastructure/parsers/universal.parser';
 import { DocumentsController } from './controller/documents.controller';
 import { OracleConnectionService } from './infrastructure/database/oracle-connection.service';
 import { ChatHistoryService } from './infrastructure/knowledge/chat/chat-history.service';
+import { ObjectStorageService } from './infrastructure/storage/object-storage.service';
 
 @Module({
   imports: [ConfigModule],
@@ -23,6 +24,7 @@ import { ChatHistoryService } from './infrastructure/knowledge/chat/chat-history
     UniversalParser,
     OracleConnectionService,
     ChatHistoryService,
+    ObjectStorageService,
   ],
 })
 export class AgentModule {}

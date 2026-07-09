@@ -6,15 +6,14 @@ import {
   HttpStatus,
   Post,
 } from '@nestjs/common';
-
 import { AgentService } from '../application/agent.service';
 import { AskQuestionDto } from '../application/dto/ask-question.dto';
+import { ObjectStorageService } from '../infrastructure/storage/object-storage.service';
 
 /**
  * RF-07: API del agente conversacional
  * Requiere ValidationPipe global
  */
-
 interface AskAgentResponse {
   respuesta: string;
 }
@@ -34,7 +33,10 @@ interface AgentStatusResponse {
 
 @Controller('agent')
 export class AgentController {
-  constructor(private readonly agentService: AgentService) {}
+  constructor(
+    private readonly agentService: AgentService,
+    private readonly objectStorageService: ObjectStorageService,
+  ) {}
 
   /**
    * Endpoint principal del agente (RAG / LLM / lógica interna)
@@ -46,7 +48,6 @@ export class AgentController {
       dto.mensaje,
       dto.sessionId,
     );
-
     return { respuesta };
   }
 
@@ -65,7 +66,6 @@ export class AgentController {
       embeddingModel,
       generationModel,
     } = await this.agentService.getStatus();
-
     return {
       status,
       documentsIndexed,
@@ -74,5 +74,15 @@ export class AgentController {
       embeddingModel,
       generationModel,
     };
+  }
+
+  /**
+   * TEMPORAL: solo para confirmar conectividad con Object Storage
+   * (Instance Principal + Dynamic Group + Policy). Se elimina una vez
+   * confirmado que la autenticación funciona.
+   */
+  @Get('test-storage')
+  async testStorage() {
+    return this.objectStorageService.list();
   }
 }
