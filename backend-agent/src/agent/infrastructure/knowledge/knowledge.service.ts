@@ -1,8 +1,9 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { promises as fsPromises } from 'fs';
 import * as path from 'path';
 import { EmbeddingService } from '../gemini/embedding.service';
 import { UniversalParser } from '../parsers/universal.parser';
+import { ObjectStorageService } from '../storage/object-storage.service';
+import { withTempFile } from '../storage/temp-file.util';
 import { chunkText } from './chunking.util';
 import { EmbeddedChunk, VectorStoreService } from './vector-store.service';
 
@@ -10,7 +11,7 @@ import { EmbeddedChunk, VectorStoreService } from './vector-store.service';
 export class KnowledgeService implements OnModuleInit {
   private readonly logger = new Logger(KnowledgeService.name);
   private indexingPromise: Promise<void> | null = null;
-  private indexReady = false; // evita golpear la DB solo para chequear "¿ya indexó?"
+  private indexReady = false;
   private lastIndexedAt: Date | null = null;
 
   private readonly TOP_K = 6;
@@ -20,6 +21,7 @@ export class KnowledgeService implements OnModuleInit {
     private readonly parser: UniversalParser,
     private readonly embeddingService: EmbeddingService,
     private readonly vectorStore: VectorStoreService,
+    private readonly objectStorageService: ObjectStorageService,
   ) {}
 
   async onModuleInit(): Promise<void> {
@@ -35,31 +37,31 @@ export class KnowledgeService implements OnModuleInit {
   }
 
   private async buildIndex(): Promise<void> {
-    this.logger.log('Construyendo índice vectorial en Oracle Database...');
+    this.logger.log('Construyendo índice vectorial desde Object Storage...');
 
-    const kbPath = path.resolve(process.cwd(), '../knowledge_base');
-    const files = await fsPromises.readdir(kbPath, { withFileTypes: true });
+    const objects = await this.objectStorageService.list();
 
-    const validFiles = files
-      .filter(
-        (file) =>
-          file.isFile() &&
-          this.parser.supportedExtensions.includes(
-            path.extname(file.name).toLowerCase(),
-          ),
-      )
-      .sort((a, b) => a.name.localeCompare(b.name));
+    const validObjects = objects.filter((obj) =>
+      this.parser.supportedExtensions.includes(
+        path.extname(obj.name).toLowerCase(),
+      ),
+    );
 
     const allChunks: { text: string; fileName: string; chunkIndex: number }[] =
       [];
 
-    for (const file of validFiles) {
-      const filePath = path.join(kbPath, file.name);
+    for (const obj of validObjects) {
       try {
-        const parsed = await this.parser.parse(filePath);
+        const buffer = await this.objectStorageService.download(obj.name);
+        const extension = path.extname(obj.name);
+
+        const parsed = await withTempFile(buffer, extension, (tempPath) =>
+          this.parser.parse(tempPath),
+        );
+
         if (!parsed.text?.trim()) {
           this.logger.warn(
-            `${file.name} no contiene texto extraíble, se omite.`,
+            `${obj.name} no contiene texto extraíble, se omite.`,
           );
           continue;
         }
@@ -68,13 +70,13 @@ export class KnowledgeService implements OnModuleInit {
         pieces.forEach((piece, index) => {
           allChunks.push({
             text: piece,
-            fileName: file.name,
+            fileName: obj.name,
             chunkIndex: index,
           });
         });
       } catch (error) {
         this.logger.error(
-          `Error procesando ${file.name} durante la indexación`,
+          `Error procesando ${obj.name} durante la indexación`,
           error as Error,
         );
       }
