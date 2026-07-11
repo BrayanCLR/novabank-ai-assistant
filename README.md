@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/screenshots/logo.svg" alt="NovaBank AI Logo" height="40" />
+<img src="docs/screenshots/logo.svg" alt="NovaBank AI Logo" width="500" />
 
 # NovaBank AI — Asistente Corporativo de Conocimiento
 
