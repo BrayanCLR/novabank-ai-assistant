@@ -1,12 +1,14 @@
 <div align="center">
 
+<img src="docs/screenshots/logo.svg" alt="NovaBank AI Logo" height="100" />
+
 # NovaBank AI — Asistente Corporativo de Conocimiento
 
 **Un agente RAG con memoria conversacional, construido sobre Oracle Autonomous Database 26ai (AI Vector Search) y Google Gemini, desplegado 100% en Oracle Cloud Infrastructure.**
 
 [🔗 Demo en vivo](https://novabankaiassistant.duckdns.org) · [📂 Repositorio](https://github.com/BrayanCLR/novabank-ai-assistant)
 
-![Next.js](https://img.shields.io/badge/Next.js-16-black) ![NestJS](https://img.shields.io/badge/NestJS-11-E0234E) ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6) ![Oracle](https://img.shields.io/badge/Oracle-23ai-F80000) ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED) ![Gemini](https://img.shields.io/badge/Google-Gemini-4285F4)
+![Next.js](https://img.shields.io/badge/Next.js-16-black) ![NestJS](https://img.shields.io/badge/NestJS-11-E0234E) ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6) ![Oracle](https://img.shields.io/badge/Oracle-26ai-F80000) ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED) ![Gemini](https://img.shields.io/badge/Google-Gemini-4285F4)
 
 </div>
 
