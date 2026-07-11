@@ -1,9 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="200" height="40" viewBox="0 0 200 40">
+<svg xmlns="http://www.w3.org/2000/svg" width="500" height="100" viewBox="0 0 500 100">
   <style>
     .text-nova { 
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
       font-weight: 700; 
-      font-size: 18px; 
+      font-size: 46px; 
       fill: #ffffff; 
       letter-spacing: -0.02em; 
     }
@@ -15,11 +15,15 @@
     }
   </style>
   
-  <rect x="0" y="7" width="26" height="26" rx="8" fill="#f97316" fill-opacity="0.1" stroke="#f97316" stroke-opacity="0.2" stroke-width="1"/>
-  
-  <g transform="translate(5.5, 12.5) scale(0.625)">
-    <path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z" fill="none" stroke="#f97316" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Contenedor del ícono escalado (x2.5) y centrado verticalmente -->
+  <g transform="translate(10, 17) scale(2.5)">
+    <rect x="0" y="0" width="26" height="26" rx="8" fill="#f97316" fill-opacity="0.1" stroke="#f97316" stroke-opacity="0.2" stroke-width="1"/>
+    
+    <g transform="translate(5.5, 5.5) scale(0.625)">
+      <path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z" fill="none" stroke="#f97316" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
   </g>
   
-  <text x="34" y="26" class="text-nova">NovaBank <tspan class="text-ai">AI</tspan></text>
+  <!-- Texto movido a la derecha del ícono grande y con tamaño de fuente aumentado -->
+  <text x="95" y="66" class="text-nova">NovaBank <tspan class="text-ai">AI</tspan></text>
 </svg>
