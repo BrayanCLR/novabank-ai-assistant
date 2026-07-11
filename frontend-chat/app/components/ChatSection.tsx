@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, SubmitEvent } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Bot, Send, User } from 'lucide-react';
 import { API_BASE_URL } from '../lib/config';
 import { getOrCreateSessionId } from '../lib/session';
@@ -43,7 +43,7 @@ export default function ChatSection({ messages, setMessages }: ChatSectionProps)
     }
   };
 
-  const sendMessage = async (e: React.SubmitEvent) => {
+  const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!input.trim() || isLoading) return;
@@ -112,8 +112,8 @@ export default function ChatSection({ messages, setMessages }: ChatSectionProps)
           >
             <div
               className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg ${msg.role === 'user'
-                  ? 'bg-orange-500 text-black'
-                  : 'bg-zinc-900 border border-zinc-800 text-orange-500'
+                ? 'bg-orange-500 text-black'
+                : 'bg-zinc-900 border border-zinc-800 text-orange-500'
                 }`}
             >
               {msg.role === 'user' ? (
@@ -124,14 +124,20 @@ export default function ChatSection({ messages, setMessages }: ChatSectionProps)
             </div>
 
             <div
-              className={`max-w-[85%] md:max-w-[75%] p-5 rounded-2xl text-[15px] leading-relaxed whitespace-pre-wrap shadow-md ${msg.role === 'user'
+              className={`max-w-[85%] md:max-w-[75%] p-5 rounded-2xl shadow-md ${msg.role === 'user'
                   ? 'bg-orange-500 text-black font-medium rounded-tr-none'
                   : 'bg-[#121215] border border-zinc-800/80 text-zinc-300 rounded-tl-none'
                 }`}
             >
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {msg.content}
-              </ReactMarkdown>
+              {msg.role === 'agent' ? (
+                <div className="prose prose-invert max-w-none">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {msg.content}
+                  </ReactMarkdown>
+                </div>
+              ) : (
+                msg.content
+              )}
             </div>
           </div>
         ))}
