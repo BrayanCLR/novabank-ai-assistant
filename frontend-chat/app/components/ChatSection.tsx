@@ -1,9 +1,11 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, SubmitEvent } from 'react';
 import { Bot, Send, User } from 'lucide-react';
 import { API_BASE_URL } from '../lib/config';
 import { getOrCreateSessionId } from '../lib/session';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 type Message = { role: 'user' | 'agent'; content: string };
 
@@ -41,7 +43,7 @@ export default function ChatSection({ messages, setMessages }: ChatSectionProps)
     }
   };
 
-  const sendMessage = async (e: React.FormEvent) => {
+  const sendMessage = async (e: React.SubmitEvent) => {
     e.preventDefault();
 
     if (!input.trim() || isLoading) return;
@@ -109,11 +111,10 @@ export default function ChatSection({ messages, setMessages }: ChatSectionProps)
             className={`flex gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
           >
             <div
-              className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg ${
-                msg.role === 'user'
+              className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg ${msg.role === 'user'
                   ? 'bg-orange-500 text-black'
                   : 'bg-zinc-900 border border-zinc-800 text-orange-500'
-              }`}
+                }`}
             >
               {msg.role === 'user' ? (
                 <User className="w-5 h-5" />
@@ -123,13 +124,14 @@ export default function ChatSection({ messages, setMessages }: ChatSectionProps)
             </div>
 
             <div
-              className={`max-w-[85%] md:max-w-[75%] p-5 rounded-2xl text-[15px] leading-relaxed whitespace-pre-wrap shadow-md ${
-                msg.role === 'user'
+              className={`max-w-[85%] md:max-w-[75%] p-5 rounded-2xl text-[15px] leading-relaxed whitespace-pre-wrap shadow-md ${msg.role === 'user'
                   ? 'bg-orange-500 text-black font-medium rounded-tr-none'
                   : 'bg-[#121215] border border-zinc-800/80 text-zinc-300 rounded-tl-none'
-              }`}
+                }`}
             >
-              {msg.content}
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {msg.content}
+              </ReactMarkdown>
             </div>
           </div>
         ))}

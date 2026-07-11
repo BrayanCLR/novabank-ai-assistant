@@ -93,6 +93,7 @@ export default function LandingPage() {
     <div style={{ background: c.bg, color: c.text, minHeight: '100vh', position: 'relative', overflow: 'hidden' }}>
       
       <style dangerouslySetInnerHTML={{ __html: `
+        /* ANIMACIONES Y UTILIDADES GLOBALES */
         .reveal-on-scroll {
           opacity: 0;
           transform: translateY(30px);
@@ -135,11 +136,52 @@ export default function LandingPage() {
             linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
           background-size: 30px 30px;
         }
+
+        /* MEDIA QUERIES RESPONSIVAS PRO (Sobreescritura de estilos en línea en móviles) */
+        @media (max-width: 768px) {
+          /* Header */
+          .resp-header { padding: 12px 16px !important; }
+          .resp-nav { display: none !important; }
+          .resp-lang-btn { padding: 6px 8px !important; font-size: 11px !important; }
+          
+          /* Hero */
+          .resp-hero { padding: 60px 16px 40px !important; }
+          .resp-hero-title { font-size: clamp(32px, 8vw, 42px) !important; }
+          .resp-hero-buttons { flex-direction: column !important; gap: 12px !important; width: 100% !important; }
+          .resp-hero-buttons > * { width: 100% !important; justify-content: center !important; }
+          
+          /* Dashboard Mockup */
+          .resp-mockup-wrapper { padding: 0 16px 60px !important; }
+          .resp-mockup-container { flex-direction: column !important; height: 600px !important; }
+          .resp-mockup-sidebar { 
+            width: 100% !important; 
+            height: auto !important;
+            flex-direction: row !important; 
+            align-items: center !important; 
+            justify-content: space-between !important;
+            border-right: none !important; 
+            border-bottom: 1px solid ${DASH_BORDER} !important;
+          }
+          .resp-mockup-logo-area { border-bottom: none !important; padding: 12px 16px !important; }
+          .resp-mockup-nav { display: none !important; }
+          .resp-mockup-status { border-top: none !important; padding: 0 16px !important; background: transparent !important; }
+          .resp-mockup-chat { padding: 16px !important; gap: 16px !important; }
+          .resp-mockup-bubble { max-width: 95% !important; padding: 12px 16px !important; font-size: 13px !important; }
+          
+          /* Secciones (About, How, Features) */
+          .resp-section { padding: 40px 16px 60px !important; }
+          .resp-grid { grid-template-columns: 1fr !important; }
+          
+          /* Footer */
+          .resp-footer { flex-direction: column !important; gap: 16px !important; text-align: center !important; justify-content: center !important; }
+        }
       `}} />
 
       <div className="bg-grid" />
 
+      {/* HEADER */}
       <header
+        className="resp-header"
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -159,8 +201,8 @@ export default function LandingPage() {
             style={{
               width: 26,
               height: 26,
-              background: `${ORANGE}1A`, // orange-500/10
-              border: `1px solid ${ORANGE}33`, // orange-500/20
+              background: `${ORANGE}1A`,
+              border: `1px solid ${ORANGE}33`,
               borderRadius: 8,
               display: 'flex',
               alignItems: 'center',
@@ -172,7 +214,7 @@ export default function LandingPage() {
           NovaBank <span style={{ color: ORANGE }}>AI</span>
         </div>
 
-        <nav style={{ display: 'flex', gap: 28, fontSize: 14, color: c.muted, fontWeight: 500 }}>
+        <nav className="resp-nav" style={{ display: 'flex', gap: 28, fontSize: 14, color: c.muted, fontWeight: 500 }}>
           <a href="#about" style={{ textDecoration: 'none', color: 'inherit', transition: 'color 0.2s' }} onMouseOver={e => e.currentTarget.style.color = c.text} onMouseOut={e => e.currentTarget.style.color = c.muted}>{t.nav.about}</a>
           <a href="#how" style={{ textDecoration: 'none', color: 'inherit', transition: 'color 0.2s' }} onMouseOver={e => e.currentTarget.style.color = c.text} onMouseOut={e => e.currentTarget.style.color = c.muted}>{t.nav.how}</a>
           <a href="#features" style={{ textDecoration: 'none', color: 'inherit', transition: 'color 0.2s' }} onMouseOver={e => e.currentTarget.style.color = c.text} onMouseOut={e => e.currentTarget.style.color = c.muted}>{t.nav.features}</a>
@@ -183,6 +225,7 @@ export default function LandingPage() {
             {locales.map(({ code, label }) => (
               <button
                 key={code}
+                className="resp-lang-btn"
                 onClick={() => setLocale(code)}
                 style={{
                   padding: '6px 12px',
@@ -215,6 +258,7 @@ export default function LandingPage() {
               justifyContent: 'center',
               cursor: 'pointer',
               transition: 'all 0.2s',
+              flexShrink: 0
             }}
           >
             {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
@@ -222,6 +266,7 @@ export default function LandingPage() {
 
           <Link
             href="/chat"
+            className="resp-nav" // Se oculta en móviles muy pequeños para dar prioridad a acciones primarias si es necesario (opcional)
             style={{
               background: ORANGE,
               color: ORANGE_TEXT_ON,
@@ -232,6 +277,7 @@ export default function LandingPage() {
               textDecoration: 'none',
               boxShadow: `0 4px 14px ${c.accentGlow}`,
               transition: 'transform 0.2s',
+              whiteSpace: 'nowrap'
             }}
             onMouseOver={e => e.currentTarget.style.transform = 'translateY(-1px)'}
             onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
@@ -243,7 +289,7 @@ export default function LandingPage() {
 
       <main style={{ position: 'relative', zIndex: 10 }}>
         {/* HERO SECTION */}
-        <section className="reveal-on-scroll" style={{ textAlign: 'center', padding: '100px 24px 64px' }}>
+        <section className="reveal-on-scroll resp-hero" style={{ textAlign: 'center', padding: '100px 24px 64px' }}>
           <div
             style={{
               fontFamily: 'monospace',
@@ -264,6 +310,7 @@ export default function LandingPage() {
             {t.hero.eyebrow}
           </div>
           <h1
+            className="resp-hero-title"
             style={{
               fontSize: 'clamp(36px, 5vw, 56px)',
               fontWeight: 800,
@@ -278,7 +325,7 @@ export default function LandingPage() {
           <p style={{ color: c.muted, fontSize: 18, maxWidth: 520, margin: '0 auto 36px', lineHeight: 1.5 }}>
             {t.hero.subhead}
           </p>
-          <div style={{ display: 'flex', gap: 14, justifyContent: 'center', marginBottom: 24 }}>
+          <div className="resp-hero-buttons" style={{ display: 'flex', gap: 14, justifyContent: 'center', marginBottom: 24, marginInline: 'auto' }}>
             <Link
               href="/chat"
               style={{
@@ -308,6 +355,8 @@ export default function LandingPage() {
                 fontSize: 16,
                 border: `1px solid ${c.border}`,
                 textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center'
               }}
             >
               {t.hero.ctaSecondary}
@@ -318,9 +367,10 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* DASHBOARD MOCKUP SECTION - Refactorizado como Centro de Mando */}
-        <section className="reveal-on-scroll delay-1" style={{ padding: '0 24px 80px', display: 'flex', justifyContent: 'center' }}>
+        {/* DASHBOARD MOCKUP SECTION */}
+        <section className="reveal-on-scroll delay-1 resp-mockup-wrapper" style={{ padding: '0 24px 80px', display: 'flex', justifyContent: 'center' }}>
           <div
+            className="resp-mockup-container"
             style={{
               width: '100%',
               maxWidth: 880,
@@ -331,13 +381,14 @@ export default function LandingPage() {
               display: 'flex',
               flexDirection: 'row',
               boxShadow: `0 24px 50px -12px rgba(0,0,0,0.4)`,
-              height: 480, // Fija una altura para simular ventana
+              height: 520, 
             }}
           >
             {/* Sidebar Realista */}
-            <div style={{ width: 240, background: DASH_SIDEBAR, borderRight: `1px solid ${DASH_BORDER}`, display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+            <div className="resp-mockup-sidebar" style={{ width: 240, background: DASH_SIDEBAR, borderRight: `1px solid ${DASH_BORDER}`, display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+              
               {/* Logo Area */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '20px 24px', borderBottom: `1px solid ${DASH_BORDER}` }}>
+              <div className="resp-mockup-logo-area" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '20px 24px', borderBottom: `1px solid ${DASH_BORDER}` }}>
                 <div style={{ background: `${ORANGE}1A`, padding: '8px', borderRadius: '12px', border: `1px solid ${ORANGE}33` }}>
                   <Zap size={20} color={ORANGE} />
                 </div>
@@ -348,7 +399,7 @@ export default function LandingPage() {
               </div>
 
               {/* Navigation */}
-              <div style={{ padding: '16px', flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div className="resp-mockup-nav" style={{ padding: '16px', flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: `${ORANGE}1A`, border: `1px solid ${ORANGE}33`, borderRadius: '12px', color: ORANGE, fontSize: 13, fontWeight: 600, boxShadow: `0 0 15px ${ORANGE}1A` }}>
                   <Bot size={18} /> Centro de Mando
                 </div>
@@ -361,7 +412,7 @@ export default function LandingPage() {
               </div>
 
               {/* Status Strip */}
-              <div style={{ padding: '16px', borderTop: `1px solid ${DASH_BORDER}`, background: '#0a0a0c', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 10, fontSize: 11, color: '#71717a', fontFamily: 'monospace' }}>
+              <div className="resp-mockup-status" style={{ padding: '16px', borderTop: `1px solid ${DASH_BORDER}`, background: '#0a0a0c', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 10, fontSize: 11, color: '#71717a', fontFamily: 'monospace' }}>
                 <div style={{ width: 8, height: 8, borderRadius: '50%', background: ORANGE, boxShadow: `0 0 8px ${ORANGE}CC` }} />
                 SYS_OK / 248 DOCS
               </div>
@@ -379,31 +430,31 @@ export default function LandingPage() {
               </div>
 
               {/* Chat Feed */}
-              <div style={{ flex: 1, padding: '24px 32px', display: 'flex', flexDirection: 'column', gap: 24, overflowY: 'hidden', justifyContent: 'flex-end', paddingBottom: 40 }}>
+              <div className="resp-mockup-chat" style={{ flex: 1, padding: '24px 32px', display: 'flex', flexDirection: 'column', gap: 24, overflowY: 'auto', paddingBottom: 32 }}>
                 
-                {/* Agent Welcome Message (Hardcoded for context) */}
+                {/* Agent Welcome Message */}
                 <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
                   <div style={{ width: 36, height: 36, borderRadius: '10px', background: '#18181b', border: `1px solid ${DASH_BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     <Bot size={18} color={ORANGE} />
                   </div>
-                  <div style={{ background: DASH_BUBBLE, border: `1px solid ${DASH_BORDER}`, color: '#d4d4d8', fontSize: 14, padding: '16px 20px', borderRadius: '6px 20px 20px 20px', maxWidth: '80%', lineHeight: 1.5 }}>
+                  <div className="resp-mockup-bubble" style={{ background: DASH_BUBBLE, border: `1px solid ${DASH_BORDER}`, color: '#d4d4d8', fontSize: 14, padding: '16px 20px', borderRadius: '6px 20px 20px 20px', maxWidth: '80%', lineHeight: 1.5 }}>
                     Bienvenido al Centro de Mando de NovaBank. Soy tu agente RAG de Compliance. ¿En qué te puedo ayudar hoy?
                   </div>
                 </div>
 
-                {/* User Message (From translation) */}
+                {/* User Message */}
                 <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                  <div style={{ background: ORANGE, color: ORANGE_TEXT_ON, fontSize: 14, fontWeight: 500, padding: '16px 20px', borderRadius: '20px 20px 6px 20px', maxWidth: '80%', boxShadow: `0 4px 15px ${ORANGE}33` }}>
+                  <div className="resp-mockup-bubble" style={{ background: ORANGE, color: ORANGE_TEXT_ON, fontSize: 14, fontWeight: 500, padding: '16px 20px', borderRadius: '20px 20px 6px 20px', maxWidth: '80%', boxShadow: `0 4px 15px ${ORANGE}33` }}>
                     {t.hero.mockupQuestion}
                   </div>
                 </div>
 
-                {/* Agent Response (From translation) */}
+                {/* Agent Response */}
                 <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
                   <div style={{ width: 36, height: 36, borderRadius: '10px', background: '#18181b', border: `1px solid ${DASH_BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     <Bot size={18} color={ORANGE} />
                   </div>
-                  <div style={{ background: DASH_BUBBLE, border: `1px solid ${DASH_BORDER}`, color: '#d4d4d8', fontSize: 14, padding: '16px 20px', borderRadius: '6px 20px 20px 20px', maxWidth: '85%', lineHeight: 1.6 }}>
+                  <div className="resp-mockup-bubble" style={{ background: DASH_BUBBLE, border: `1px solid ${DASH_BORDER}`, color: '#d4d4d8', fontSize: 14, padding: '16px 20px', borderRadius: '6px 20px 20px 20px', maxWidth: '85%', lineHeight: 1.6 }}>
                     {t.hero.mockupAnswer}
                   </div>
                 </div>
@@ -414,14 +465,14 @@ export default function LandingPage() {
         </section>
 
         {/* ABOUT SECTION */}
-        <section id="about" className="reveal-on-scroll" style={{ padding: '32px 24px 80px', maxWidth: 960, margin: '0 auto' }}>
+        <section id="about" className="reveal-on-scroll resp-section" style={{ padding: '32px 24px 80px', maxWidth: 960, margin: '0 auto' }}>
           <div style={{ fontFamily: 'monospace', color: ORANGE, fontSize: 13, marginBottom: 12, textAlign: 'center', fontWeight: 600 }}>
             {t.about.eyebrow}
           </div>
           <h2 style={{ fontSize: 32, fontWeight: 800, textAlign: 'center', marginBottom: 48, letterSpacing: '-0.02em' }}>
             {t.about.title}
           </h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24 }}>
+          <div className="resp-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24 }}>
             <div className="fintech-card" style={{ background: c.surface, border: `1px solid ${c.border}`, borderRadius: 16, padding: 32 }}>
               <div style={{ width: 48, height: 48, background: c.iconBg, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
                 <ShieldCheck size={24} color={ORANGE} />
@@ -440,14 +491,14 @@ export default function LandingPage() {
         </section>
 
         {/* HOW IT WORKS SECTION */}
-        <section id="how" className="reveal-on-scroll delay-1" style={{ padding: '32px 24px 80px', maxWidth: 1024, margin: '0 auto' }}>
+        <section id="how" className="reveal-on-scroll delay-1 resp-section" style={{ padding: '32px 24px 80px', maxWidth: 1024, margin: '0 auto' }}>
           <div style={{ fontFamily: 'monospace', color: ORANGE, fontSize: 13, marginBottom: 12, textAlign: 'center', fontWeight: 600 }}>
             {t.how.eyebrow}
           </div>
           <h2 style={{ fontSize: 32, fontWeight: 800, textAlign: 'center', marginBottom: 56, letterSpacing: '-0.02em' }}>
             {t.how.title}
           </h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 32 }}>
+          <div className="resp-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 32 }}>
             {t.how.steps.map((step, i) => (
               <div key={step.title} style={{ position: 'relative' }}>
                 <div style={{ fontFamily: 'monospace', color: c.border, fontSize: 64, fontWeight: 800, position: 'absolute', top: -35, left: -10, zIndex: -1, opacity: 0.5 }}>
@@ -461,14 +512,14 @@ export default function LandingPage() {
         </section>
 
         {/* FEATURES SECTION */}
-        <section id="features" className="reveal-on-scroll delay-2" style={{ padding: '32px 24px 96px', maxWidth: 960, margin: '0 auto' }}>
+        <section id="features" className="reveal-on-scroll delay-2 resp-section" style={{ padding: '32px 24px 96px', maxWidth: 960, margin: '0 auto' }}>
           <div style={{ fontFamily: 'monospace', color: ORANGE, fontSize: 13, marginBottom: 12, textAlign: 'center', fontWeight: 600 }}>
             {t.features.eyebrow}
           </div>
           <h2 style={{ fontSize: 32, fontWeight: 800, textAlign: 'center', marginBottom: 48, letterSpacing: '-0.02em' }}>
             {t.features.title}
           </h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 20 }}>
+          <div className="resp-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 20 }}>
             {t.features.items.map((item, i) => {
               const Icon = FEATURE_ICONS[i % FEATURE_ICONS.length];
               return (
@@ -500,7 +551,9 @@ export default function LandingPage() {
         </section>
       </main>
 
+      {/* FOOTER */}
       <footer
+        className="resp-footer"
         style={{
           borderTop: `1px solid ${c.navBorder}`,
           padding: '32px 24px',
