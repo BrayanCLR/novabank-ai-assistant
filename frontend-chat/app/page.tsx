@@ -1,219 +1,525 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Activity, Bot, Database, ShieldAlert, Zap, Menu, X, Info } from 'lucide-react';
-import ChatSection from './components/ChatSection';
-import KnowledgeSection from './components/KnowledgeSection';
-import StatusSection from './components/StatusSection';
-import { API_BASE_URL } from './lib/config';
+import { useMemo, useState, useEffect } from 'react';
+import Link from 'next/link';
+import {
+  ArrowRight,
+  MessageCircle,
+  Moon,
+  Sun,
+  ShieldCheck,
+  Wallet,
+  TrendingUp,
+  Activity,
+  Lock,
+  Zap,
+  Bot,
+  Database,
+  ShieldAlert
+} from 'lucide-react';
+import { content, locales, type Locale } from './lib/landing-content';
 
-type SectionId = 'chat' | 'knowledge' | 'status';
-type Message = { role: 'user' | 'agent'; content: string };
+type Theme = 'dark' | 'light';
 
-const NAV_ITEMS: { id: SectionId; label: string; icon: typeof Bot }[] = [
-  { id: 'chat', label: 'Centro de Mando', icon: Bot },
-  { id: 'knowledge', label: 'Base de Conocimiento', icon: Database },
-  { id: 'status', label: 'Monitoreo RAG', icon: Activity },
-];
+const FEATURE_ICONS = [Wallet, TrendingUp, Lock, Activity];
 
-export default function NovaBankDashboard() {
-  const [activeSection, setActiveSection] = useState<SectionId>('chat');
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: 'agent',
-      content: 'Bienvenido al Centro de Mando de NovaBank. Soy tu agente RAG de Compliance. ¿En qué te puedo ayudar hoy?',
-    },
-  ]);
+const THEME_TOKENS: Record<Theme, Record<string, string>> = {
+  dark: {
+    bg: '#0A0A0B',
+    surface: '#141416',
+    surfaceAlt: '#0d0d0e',
+    border: '#232326',
+    navBorder: 'rgba(28, 28, 31, 0.7)',
+    text: '#F5F5F4',
+    muted: '#9B9B9F',
+    mutedSoft: '#6b6b70',
+    iconBg: '#1c1c1f',
+    glass: 'rgba(10, 10, 11, 0.8)',
+    accentGlow: 'rgba(249, 115, 22, 0.15)',
+  },
+  light: {
+    bg: '#FFFFFF',
+    surface: '#F7F7F8',
+    surfaceAlt: '#F1F1F2',
+    border: '#E5E5E7',
+    navBorder: 'rgba(234, 234, 236, 0.7)',
+    text: '#0A0A0B',
+    muted: '#5B5B60',
+    mutedSoft: '#8A8A8F',
+    iconBg: '#EDEDEE',
+    glass: 'rgba(255, 255, 255, 0.8)',
+    accentGlow: 'rgba(249, 115, 22, 0.08)',
+  },
+};
 
-  return (
-    <div className="flex h-screen bg-[#09090b] text-zinc-300 overflow-hidden font-sans selection:bg-orange-500/30">
+// Naranja exacto del chat (Tailwind orange-500)
+const ORANGE = '#f97316';
+const ORANGE_TEXT_ON = '#210D00';
 
-      {/* OVERLAY PARA MÓVILES */}
-      {isMobileMenuOpen && (
-        <div
-          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-40 md:hidden transition-opacity"
-          onClick={() => setIsMobileMenuOpen(false)}
-        />
-      )}
+// Colores hardcodeados para el Mockup (para que coincida con el dashboard oscuro real)
+const DASH_BG = '#09090b';
+const DASH_SIDEBAR = '#0c0c0e';
+const DASH_BUBBLE = '#121215';
+const DASH_BORDER = 'rgba(39, 39, 42, 0.5)'; // zinc-800/50
 
-      {/* SIDEBAR OSCURO */}
-     <aside
-  className={`fixed inset-y-0 left-0 z-50 w-80 md:w-80 bg-[#0c0c0e] border-r border-zinc-800/50 flex flex-col shadow-2xl transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${
-    isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
-  }`}
->
-        <div className="flex items-center justify-between md:justify-start gap-3 p-6 border-b border-zinc-800/50">
-          <div className="flex items-center gap-3">
-            <div className="bg-orange-600/10 p-2 rounded-xl border border-orange-500/20">
-              <Zap className="w-5 h-5 md:w-6 md:h-6 text-orange-500" />
-            </div>
-            <div>
-              <h2 className="text-white font-bold text-lg md:text-xl leading-tight tracking-wide">NOVA<span className="text-orange-500">AI</span></h2>
-              <p className="text-orange-500/70 text-[9px] md:text-[10px] font-bold uppercase tracking-widest">Internal System</p>
-            </div>
-          </div>
+export default function LandingPage() {
+  const [theme, setTheme] = useState<Theme>('dark');
+  const [locale, setLocale] = useState<Locale>('es');
 
-          <button
-            className="md:hidden text-zinc-500 hover:text-white transition-colors"
-            onClick={() => setIsMobileMenuOpen(false)}
-          >
-            <X className="w-6 h-6" />
-          </button>
-        </div>
-
-        <nav className="flex-1 p-4 space-y-2 overflow-y-auto custom-scrollbar">
-          {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              onClick={() => {
-                setActiveSection(id);
-                setIsMobileMenuOpen(false);
-              }}
-              className={`w-full flex items-center gap-3 px-4 py-3.5 md:py-3 rounded-xl text-sm md:text-sm font-semibold transition-all duration-200 ${activeSection === id
-                ? 'bg-orange-500/10 text-orange-500 border border-orange-500/20 shadow-[0_0_15px_rgba(249,115,22,0.1)]'
-                : 'text-zinc-500 hover:bg-zinc-900 hover:text-zinc-300 border border-transparent'
-                }`}
-            >
-              <Icon className={`w-5 h-5 ${activeSection === id ? 'text-orange-500' : 'text-zinc-600'}`} />
-              {label}
-            </button>
-          ))}
-        </nav>
-
-        {/* BIENVENIDA */}
-        <div className="px-4 pb-4">
-          <div className="bg-[#121215] border border-zinc-800/80 rounded-xl p-4 shadow-inner">
-            <h3 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-              <Info className="w-3 h-3 text-orange-500" />
-              Bienvenido
-            </h3>
-
-            <div className="space-y-3 text-[11px] text-zinc-500 leading-relaxed">
-              <p>
-                <span className="text-zinc-200 font-semibold">NOVA AI</span> es el
-                asistente inteligente de <span className="text-orange-500 font-semibold">NOVABANK</span>,
-                diseñado para responder consultas utilizando exclusivamente la
-                documentación oficial de la organización mediante tecnología RAG.
-              </p>
-
-              <div>
-                <p className="text-zinc-300 font-semibold mb-2">
-                  Puedes consultar:
-                </p>
-                <ul className="space-y-1">
-                  <li>• Políticas AML y procesos KYC</li>
-                  <li>• Operaciones, límites y comisiones</li>
-                  <li>• Seguridad y prevención de fraude</li>
-                  <li>• APIs y documentación técnica</li>
-                  <li>• Arquitectura de sistemas</li>
-                  <li>• Procedimientos y soporte interno</li>
-                </ul>
-              </div>
-
-              <p className="text-zinc-400 border-t border-zinc-800 pt-3">
-                Todas las respuestas se generan únicamente a partir de la base documental oficial de NOVABANK.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Tira de Estado Persistente */}
-        <SystemStatusStrip />
-      </aside>
-
-      {/* MAIN CONTENT AREA */}
-      <main className="flex-1 flex flex-col min-w-0 bg-[#09090b] relative background-grid w-full">
-
-        {/* TOP HEADER */}
-        <header className="h-20 md:h-24 bg-[#09090b]/80 backdrop-blur-md border-b border-zinc-800/50 flex items-center justify-between md:justify-center px-4 md:px-6 relative z-10 shadow-xl flex-shrink-0">
-
-          <button
-            className="md:hidden text-zinc-400 hover:text-orange-500 transition-colors p-2"
-            onClick={() => setIsMobileMenuOpen(true)}
-          >
-            <Menu className="w-7 h-7" />
-          </button>
-
-          <div className="flex flex-col items-center justify-center">
-            <div className="flex items-center gap-2 md:gap-3">
-              <ShieldAlert className="w-6 h-6 md:w-8 md:h-8 text-orange-500 animate-pulse" style={{ animationDuration: '3s' }} />
-              <h1 className="text-3xl md:text-5xl font-extrabold text-white tracking-tighter drop-shadow-lg">
-                NOVA<span className="text-orange-500">BANK</span>
-              </h1>
-            </div>
-            <p className="text-[8px] md:text-[10px] text-zinc-500 uppercase tracking-[0.3em] md:tracking-[0.4em] mt-1 font-semibold">
-              Financial Intelligence Platform
-            </p>
-          </div>
-
-          <div className="w-11 md:hidden"></div>
-        </header>
-
-        {/* SECCIÓN ACTIVA */}
-        <div className="flex-1 overflow-hidden relative z-0 w-full">
-          {activeSection === 'chat' && <ChatSection messages={messages} setMessages={setMessages} />}
-          {activeSection === 'knowledge' && <KnowledgeSection />}
-          {activeSection === 'status' && <StatusSection />}
-        </div>
-      </main>
-
-      <style dangerouslySetInnerHTML={{
-        __html: `
-        .background-grid {
-          background-size: 40px 40px;
-          background-image: linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-                            linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-        }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #27272a; border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #f97316; }
-      `}} />
-    </div>
-  );
-}
-
-function SystemStatusStrip() {
-  const [status, setStatus] = useState<'online' | 'offline' | 'loading'>('loading');
-  const [stats, setStats] = useState<{ documentsIndexed: number; chunksIndexed: number } | null>(null);
+  const t = useMemo(() => content[locale], [locale]);
+  const c = THEME_TOKENS[theme];
 
   useEffect(() => {
-    let isMounted = true;
-    const checkStatus = async () => {
-      try {
-        const res = await fetch(`${API_BASE_URL}/agent/status`);
-        if (!res.ok) throw new Error('offline');
-        const data = await res.json();
-        if (isMounted) {
-          setStatus('online');
-          setStats(data);
-        }
-      } catch {
-        if (isMounted) {
-          setStatus('offline');
-          setStats(null);
-        }
-      }
-    };
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
+    );
 
-    checkStatus();
-    const interval = setInterval(checkStatus, 15000);
-    return () => { isMounted = false; clearInterval(interval); };
-  }, []);
+    const elements = document.querySelectorAll('.reveal-on-scroll');
+    elements.forEach((el) => observer.observe(el));
+
+    return () => {
+      elements.forEach((el) => observer.unobserve(el));
+    };
+  }, [locale, theme]);
 
   return (
-    <div className="p-4 border-t border-zinc-800/80 bg-[#0a0a0c] font-mono text-[10px] md:text-[11px] text-zinc-500 flex items-center justify-center gap-2 shadow-inner">
-      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${status === 'online' ? 'bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.8)] animate-pulse' :
-        status === 'offline' ? 'bg-red-600' : 'bg-zinc-600'
-        }`} />
-      <span className="tracking-wider truncate">
-        {status === 'online' && stats
-          ? `SYS_OK / ${stats.documentsIndexed} DOCS`
-          : status === 'offline'
-            ? 'ERR_CONNECTION'
-            : 'AUTH...'}
-      </span>
+    <div style={{ background: c.bg, color: c.text, minHeight: '100vh', position: 'relative', overflow: 'hidden' }}>
+      
+      <style dangerouslySetInnerHTML={{ __html: `
+        .reveal-on-scroll {
+          opacity: 0;
+          transform: translateY(30px);
+          transition: opacity 0.8s cubic-bezier(0.5, 0, 0, 1), transform 0.8s cubic-bezier(0.5, 0, 0, 1);
+        }
+        .reveal-on-scroll.is-visible {
+          opacity: 1;
+          transform: translateY(0);
+        }
+        .delay-1 { transition-delay: 100ms; }
+        .delay-2 { transition-delay: 200ms; }
+        .delay-3 { transition-delay: 300ms; }
+        
+        .fintech-card {
+          transition: all 0.3s ease;
+        }
+        .fintech-card:hover {
+          transform: translateY(-5px);
+          border-color: ${ORANGE}40 !important;
+          box-shadow: 0 10px 30px -10px ${c.accentGlow};
+        }
+
+        .bg-grid {
+          position: absolute;
+          top: 0; left: 0; right: 0; bottom: 0;
+          background-image: 
+            linear-gradient(to right, ${c.border} 1px, transparent 1px),
+            linear-gradient(to bottom, ${c.border} 1px, transparent 1px);
+          background-size: 40px 40px;
+          mask-image: radial-gradient(circle at 50% 0%, black, transparent 70%);
+          -webkit-mask-image: radial-gradient(circle at 50% 0%, black, transparent 70%);
+          pointer-events: none;
+          z-index: 0;
+          opacity: 0.5;
+        }
+
+        .dash-bg-grid {
+          background-image: 
+            linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+          background-size: 30px 30px;
+        }
+      `}} />
+
+      <div className="bg-grid" />
+
+      <header
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '16px 24px',
+          borderBottom: `1px solid ${c.navBorder}`,
+          position: 'sticky',
+          top: 0,
+          background: c.glass,
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          zIndex: 50,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, fontSize: 18, letterSpacing: '-0.02em' }}>
+          <span
+            style={{
+              width: 26,
+              height: 26,
+              background: `${ORANGE}1A`, // orange-500/10
+              border: `1px solid ${ORANGE}33`, // orange-500/20
+              borderRadius: 8,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Zap size={15} color={ORANGE} strokeWidth={2.5} />
+          </span>
+          NovaBank <span style={{ color: ORANGE }}>AI</span>
+        </div>
+
+        <nav style={{ display: 'flex', gap: 28, fontSize: 14, color: c.muted, fontWeight: 500 }}>
+          <a href="#about" style={{ textDecoration: 'none', color: 'inherit', transition: 'color 0.2s' }} onMouseOver={e => e.currentTarget.style.color = c.text} onMouseOut={e => e.currentTarget.style.color = c.muted}>{t.nav.about}</a>
+          <a href="#how" style={{ textDecoration: 'none', color: 'inherit', transition: 'color 0.2s' }} onMouseOver={e => e.currentTarget.style.color = c.text} onMouseOut={e => e.currentTarget.style.color = c.muted}>{t.nav.how}</a>
+          <a href="#features" style={{ textDecoration: 'none', color: 'inherit', transition: 'color 0.2s' }} onMouseOver={e => e.currentTarget.style.color = c.text} onMouseOut={e => e.currentTarget.style.color = c.muted}>{t.nav.features}</a>
+        </nav>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ display: 'flex', border: `1px solid ${c.border}`, borderRadius: 8, overflow: 'hidden', background: c.surface }}>
+            {locales.map(({ code, label }) => (
+              <button
+                key={code}
+                onClick={() => setLocale(code)}
+                style={{
+                  padding: '6px 12px',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  background: locale === code ? ORANGE : 'transparent',
+                  color: locale === code ? ORANGE_TEXT_ON : c.muted,
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          <button
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            aria-label="Cambiar tema"
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 8,
+              border: `1px solid ${c.border}`,
+              background: c.surface,
+              color: c.text,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+            }}
+          >
+            {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+          </button>
+
+          <Link
+            href="/chat"
+            style={{
+              background: ORANGE,
+              color: ORANGE_TEXT_ON,
+              fontWeight: 600,
+              padding: '9px 20px',
+              borderRadius: 8,
+              fontSize: 14,
+              textDecoration: 'none',
+              boxShadow: `0 4px 14px ${c.accentGlow}`,
+              transition: 'transform 0.2s',
+            }}
+            onMouseOver={e => e.currentTarget.style.transform = 'translateY(-1px)'}
+            onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
+          >
+            {t.nav.cta}
+          </Link>
+        </div>
+      </header>
+
+      <main style={{ position: 'relative', zIndex: 10 }}>
+        {/* HERO SECTION */}
+        <section className="reveal-on-scroll" style={{ textAlign: 'center', padding: '100px 24px 64px' }}>
+          <div
+            style={{
+              fontFamily: 'monospace',
+              color: ORANGE,
+              fontSize: 13,
+              letterSpacing: '0.05em',
+              marginBottom: 20,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              background: c.accentGlow,
+              padding: '6px 12px',
+              borderRadius: 20,
+              border: `1px solid ${ORANGE}30`
+            }}
+          >
+            <ShieldCheck size={14} />
+            {t.hero.eyebrow}
+          </div>
+          <h1
+            style={{
+              fontSize: 'clamp(36px, 5vw, 56px)',
+              fontWeight: 800,
+              lineHeight: 1.1,
+              maxWidth: 720,
+              margin: '0 auto 24px',
+              letterSpacing: '-0.02em',
+            }}
+          >
+            {t.hero.headline}
+          </h1>
+          <p style={{ color: c.muted, fontSize: 18, maxWidth: 520, margin: '0 auto 36px', lineHeight: 1.5 }}>
+            {t.hero.subhead}
+          </p>
+          <div style={{ display: 'flex', gap: 14, justifyContent: 'center', marginBottom: 24 }}>
+            <Link
+              href="/chat"
+              style={{
+                background: ORANGE,
+                color: ORANGE_TEXT_ON,
+                fontWeight: 600,
+                padding: '14px 28px',
+                borderRadius: 10,
+                fontSize: 16,
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                boxShadow: `0 8px 20px ${c.accentGlow}`,
+              }}
+            >
+              {t.hero.ctaPrimary} <ArrowRight size={18} />
+            </Link>
+            <a
+              href="#how"
+              style={{
+                background: c.surface,
+                color: c.text,
+                fontWeight: 600,
+                padding: '14px 28px',
+                borderRadius: 10,
+                fontSize: 16,
+                border: `1px solid ${c.border}`,
+                textDecoration: 'none',
+              }}
+            >
+              {t.hero.ctaSecondary}
+            </a>
+          </div>
+          <div style={{ fontFamily: 'monospace', color: c.mutedSoft, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+            <Lock size={12} /> {t.hero.trust}
+          </div>
+        </section>
+
+        {/* DASHBOARD MOCKUP SECTION - Refactorizado como Centro de Mando */}
+        <section className="reveal-on-scroll delay-1" style={{ padding: '0 24px 80px', display: 'flex', justifyContent: 'center' }}>
+          <div
+            style={{
+              width: '100%',
+              maxWidth: 880,
+              background: DASH_BG,
+              border: `1px solid ${c.border}`,
+              borderRadius: 16,
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'row',
+              boxShadow: `0 24px 50px -12px rgba(0,0,0,0.4)`,
+              height: 480, // Fija una altura para simular ventana
+            }}
+          >
+            {/* Sidebar Realista */}
+            <div style={{ width: 240, background: DASH_SIDEBAR, borderRight: `1px solid ${DASH_BORDER}`, display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+              {/* Logo Area */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '20px 24px', borderBottom: `1px solid ${DASH_BORDER}` }}>
+                <div style={{ background: `${ORANGE}1A`, padding: '8px', borderRadius: '12px', border: `1px solid ${ORANGE}33` }}>
+                  <Zap size={20} color={ORANGE} />
+                </div>
+                <div>
+                  <div style={{ color: 'white', fontWeight: 700, fontSize: 16, letterSpacing: '0.02em' }}>NOVA<span style={{ color: ORANGE }}>AI</span></div>
+                  <div style={{ color: `${ORANGE}B3`, fontSize: 9, fontWeight: 700, letterSpacing: '0.15em' }}>INTERNAL SYSTEM</div>
+                </div>
+              </div>
+
+              {/* Navigation */}
+              <div style={{ padding: '16px', flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: `${ORANGE}1A`, border: `1px solid ${ORANGE}33`, borderRadius: '12px', color: ORANGE, fontSize: 13, fontWeight: 600, boxShadow: `0 0 15px ${ORANGE}1A` }}>
+                  <Bot size={18} /> Centro de Mando
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', color: '#71717a', fontSize: 13, fontWeight: 600 }}>
+                  <Database size={18} /> Base de Conocimiento
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', color: '#71717a', fontSize: 13, fontWeight: 600 }}>
+                  <Activity size={18} /> Monitoreo RAG
+                </div>
+              </div>
+
+              {/* Status Strip */}
+              <div style={{ padding: '16px', borderTop: `1px solid ${DASH_BORDER}`, background: '#0a0a0c', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 10, fontSize: 11, color: '#71717a', fontFamily: 'monospace' }}>
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: ORANGE, boxShadow: `0 0 8px ${ORANGE}CC` }} />
+                SYS_OK / 248 DOCS
+              </div>
+            </div>
+
+            {/* Main Chat Area */}
+            <div className="dash-bg-grid" style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
+              {/* Dashboard Header */}
+              <div style={{ height: '80px', borderBottom: `1px solid ${DASH_BORDER}`, background: 'rgba(9, 9, 11, 0.8)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', flexShrink: 0, zIndex: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <ShieldAlert size={22} color={ORANGE} />
+                  <div style={{ color: 'white', fontWeight: 800, fontSize: 24, letterSpacing: '-0.05em' }}>NOVA<span style={{ color: ORANGE }}>BANK</span></div>
+                </div>
+                <div style={{ fontSize: 9, color: '#71717a', letterSpacing: '0.3em', marginTop: 4, fontWeight: 600 }}>FINANCIAL INTELLIGENCE PLATFORM</div>
+              </div>
+
+              {/* Chat Feed */}
+              <div style={{ flex: 1, padding: '24px 32px', display: 'flex', flexDirection: 'column', gap: 24, overflowY: 'hidden', justifyContent: 'flex-end', paddingBottom: 40 }}>
+                
+                {/* Agent Welcome Message (Hardcoded for context) */}
+                <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+                  <div style={{ width: 36, height: 36, borderRadius: '10px', background: '#18181b', border: `1px solid ${DASH_BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Bot size={18} color={ORANGE} />
+                  </div>
+                  <div style={{ background: DASH_BUBBLE, border: `1px solid ${DASH_BORDER}`, color: '#d4d4d8', fontSize: 14, padding: '16px 20px', borderRadius: '6px 20px 20px 20px', maxWidth: '80%', lineHeight: 1.5 }}>
+                    Bienvenido al Centro de Mando de NovaBank. Soy tu agente RAG de Compliance. ¿En qué te puedo ayudar hoy?
+                  </div>
+                </div>
+
+                {/* User Message (From translation) */}
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <div style={{ background: ORANGE, color: ORANGE_TEXT_ON, fontSize: 14, fontWeight: 500, padding: '16px 20px', borderRadius: '20px 20px 6px 20px', maxWidth: '80%', boxShadow: `0 4px 15px ${ORANGE}33` }}>
+                    {t.hero.mockupQuestion}
+                  </div>
+                </div>
+
+                {/* Agent Response (From translation) */}
+                <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+                  <div style={{ width: 36, height: 36, borderRadius: '10px', background: '#18181b', border: `1px solid ${DASH_BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Bot size={18} color={ORANGE} />
+                  </div>
+                  <div style={{ background: DASH_BUBBLE, border: `1px solid ${DASH_BORDER}`, color: '#d4d4d8', fontSize: 14, padding: '16px 20px', borderRadius: '6px 20px 20px 20px', maxWidth: '85%', lineHeight: 1.6 }}>
+                    {t.hero.mockupAnswer}
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ABOUT SECTION */}
+        <section id="about" className="reveal-on-scroll" style={{ padding: '32px 24px 80px', maxWidth: 960, margin: '0 auto' }}>
+          <div style={{ fontFamily: 'monospace', color: ORANGE, fontSize: 13, marginBottom: 12, textAlign: 'center', fontWeight: 600 }}>
+            {t.about.eyebrow}
+          </div>
+          <h2 style={{ fontSize: 32, fontWeight: 800, textAlign: 'center', marginBottom: 48, letterSpacing: '-0.02em' }}>
+            {t.about.title}
+          </h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24 }}>
+            <div className="fintech-card" style={{ background: c.surface, border: `1px solid ${c.border}`, borderRadius: 16, padding: 32 }}>
+              <div style={{ width: 48, height: 48, background: c.iconBg, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
+                <ShieldCheck size={24} color={ORANGE} />
+              </div>
+              <div style={{ fontWeight: 700, fontSize: 20, marginBottom: 12 }}>{t.about.novabankTitle}</div>
+              <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.6 }}>{t.about.novabankBody}</p>
+            </div>
+            <div className="fintech-card" style={{ background: c.surface, border: `1px solid ${c.border}`, borderRadius: 16, padding: 32 }}>
+              <div style={{ width: 48, height: 48, background: c.iconBg, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
+                <MessageCircle size={24} color={ORANGE} />
+              </div>
+              <div style={{ fontWeight: 700, fontSize: 20, marginBottom: 12 }}>{t.about.novabankAiTitle}</div>
+              <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.6 }}>{t.about.novabankAiBody}</p>
+            </div>
+          </div>
+        </section>
+
+        {/* HOW IT WORKS SECTION */}
+        <section id="how" className="reveal-on-scroll delay-1" style={{ padding: '32px 24px 80px', maxWidth: 1024, margin: '0 auto' }}>
+          <div style={{ fontFamily: 'monospace', color: ORANGE, fontSize: 13, marginBottom: 12, textAlign: 'center', fontWeight: 600 }}>
+            {t.how.eyebrow}
+          </div>
+          <h2 style={{ fontSize: 32, fontWeight: 800, textAlign: 'center', marginBottom: 56, letterSpacing: '-0.02em' }}>
+            {t.how.title}
+          </h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 32 }}>
+            {t.how.steps.map((step, i) => (
+              <div key={step.title} style={{ position: 'relative' }}>
+                <div style={{ fontFamily: 'monospace', color: c.border, fontSize: 64, fontWeight: 800, position: 'absolute', top: -35, left: -10, zIndex: -1, opacity: 0.5 }}>
+                  {String(i + 1).padStart(2, '0')}
+                </div>
+                <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 10 }}>{step.title}</div>
+                <p style={{ color: c.muted, fontSize: 14, lineHeight: 1.6 }}>{step.body}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* FEATURES SECTION */}
+        <section id="features" className="reveal-on-scroll delay-2" style={{ padding: '32px 24px 96px', maxWidth: 960, margin: '0 auto' }}>
+          <div style={{ fontFamily: 'monospace', color: ORANGE, fontSize: 13, marginBottom: 12, textAlign: 'center', fontWeight: 600 }}>
+            {t.features.eyebrow}
+          </div>
+          <h2 style={{ fontSize: 32, fontWeight: 800, textAlign: 'center', marginBottom: 48, letterSpacing: '-0.02em' }}>
+            {t.features.title}
+          </h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 20 }}>
+            {t.features.items.map((item, i) => {
+              const Icon = FEATURE_ICONS[i % FEATURE_ICONS.length];
+              return (
+                <div
+                  key={item.title}
+                  className="fintech-card"
+                  style={{ background: c.surface, border: `1px solid ${c.border}`, borderRadius: 16, padding: 24 }}
+                >
+                  <div
+                    style={{
+                      width: 40,
+                      height: 40,
+                      background: c.iconBg,
+                      borderRadius: 10,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginBottom: 16,
+                    }}
+                  >
+                    <Icon size={20} color={ORANGE} />
+                  </div>
+                  <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 8 }}>{item.title}</div>
+                  <p style={{ color: c.muted, fontSize: 13.5, lineHeight: 1.6 }}>{item.body}</p>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      </main>
+
+      <footer
+        style={{
+          borderTop: `1px solid ${c.navBorder}`,
+          padding: '32px 24px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          fontSize: 13,
+          color: c.mutedSoft,
+          position: 'relative',
+          zIndex: 10,
+          background: c.bg,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <ShieldCheck size={14} />
+          <span>{t.footer.rights}</span>
+        </div>
+        <span style={{ fontFamily: 'monospace' }}>{t.footer.credit}</span>
+      </footer>
     </div>
   );
 }
