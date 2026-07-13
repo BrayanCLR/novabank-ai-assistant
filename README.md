@@ -10,7 +10,7 @@
 
 ![Next.js](https://img.shields.io/badge/Next.js-16-black) ![NestJS](https://img.shields.io/badge/NestJS-11-E0234E) ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6) ![Oracle](https://img.shields.io/badge/Oracle-26ai-F80000) ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED) ![Gemini](https://img.shields.io/badge/Google-Gemini-4285F4)
 
-</div>
+</div>a
 
 ---
 

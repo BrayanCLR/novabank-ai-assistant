@@ -1,6 +1,9 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+/* Habilita la variante dark basada en la clase .dark */
+@custom-variant dark (&:where(.dark, .dark *));
+
 body {
   background-color: #ffffff;
   color: #0f172a;

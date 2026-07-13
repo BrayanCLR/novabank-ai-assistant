@@ -23,58 +23,20 @@ type Theme = 'dark' | 'light';
 
 const FEATURE_ICONS = [Wallet, TrendingUp, Lock, Activity];
 
-const THEME_TOKENS: Record<Theme, Record<string, string>> = {
-  dark: {
-    bg: '#0A0A0B',
-    surface: '#141416',
-    surfaceAlt: '#0d0d0e',
-    border: '#232326',
-    navBorder: 'rgba(28, 28, 31, 0.7)',
-    text: '#F5F5F4',
-    muted: '#9B9B9F',
-    mutedSoft: '#6b6b70',
-    iconBg: '#1c1c1f',
-    glass: 'rgba(10, 10, 11, 0.8)',
-    accentGlow: 'rgba(249, 115, 22, 0.15)',
-  },
-  light: {
-    bg: '#FFFFFF',
-    surface: '#F7F7F8',
-    surfaceAlt: '#F1F1F2',
-    border: '#E5E5E7',
-    navBorder: 'rgba(234, 234, 236, 0.7)',
-    text: '#0A0A0B',
-    muted: '#5B5B60',
-    mutedSoft: '#8A8A8F',
-    iconBg: '#EDEDEE',
-    glass: 'rgba(255, 255, 255, 0.8)',
-    accentGlow: 'rgba(249, 115, 22, 0.08)',
-  },
-};
-
-// Naranja exacto del chat (Tailwind orange-500)
-const ORANGE = '#f97316';
-const ORANGE_TEXT_ON = '#210D00';
-
-// Colores hardcodeados para el Mockup (para que coincida con el dashboard oscuro real)
-const DASH_BG = '#09090b';
-const DASH_SIDEBAR = '#0c0c0e';
-const DASH_BUBBLE = '#121215';
-const DASH_BORDER = 'rgba(39, 39, 42, 0.5)'; // zinc-800/50
-
 export default function LandingPage() {
   const [theme, setTheme] = useState<Theme>('dark');
   const [locale, setLocale] = useState<Locale>('es');
 
   const t = useMemo(() => content[locale], [locale]);
-  const c = THEME_TOKENS[theme];
 
+  // Observer Pro: Usa data-attributes y se desconecta tras revelar para ahorrar CPU
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            entry.target.classList.add('is-visible');
+            entry.target.setAttribute('data-visible', 'true');
+            observer.unobserve(entry.target);
           }
         });
       },
@@ -84,495 +46,263 @@ export default function LandingPage() {
     const elements = document.querySelectorAll('.reveal-on-scroll');
     elements.forEach((el) => observer.observe(el));
 
-    return () => {
-      elements.forEach((el) => observer.unobserve(el));
-    };
+    return () => observer.disconnect();
   }, [locale, theme]);
 
   return (
-    <div style={{ background: c.bg, color: c.text, minHeight: '100vh', position: 'relative', overflow: 'hidden' }}>
-      
-      <style dangerouslySetInnerHTML={{ __html: `
-        /* ANIMACIONES Y UTILIDADES GLOBALES */
-        .reveal-on-scroll {
-          opacity: 0;
-          transform: translateY(30px);
-          transition: opacity 0.8s cubic-bezier(0.5, 0, 0, 1), transform 0.8s cubic-bezier(0.5, 0, 0, 1);
-        }
-        .reveal-on-scroll.is-visible {
-          opacity: 1;
-          transform: translateY(0);
-        }
-        .delay-1 { transition-delay: 100ms; }
-        .delay-2 { transition-delay: 200ms; }
-        .delay-3 { transition-delay: 300ms; }
+    // Wrapper del tema: Al cambiar el estado, Tailwind aplica la variante 'dark:' automáticamente
+    <div className={theme}>
+      <div className="relative min-h-screen overflow-hidden bg-white text-zinc-900 transition-colors duration-300 dark:bg-[#0A0A0B] dark:text-[#F5F5F4]">
         
-        .fintech-card {
-          transition: all 0.3s ease;
-        }
-        .fintech-card:hover {
-          transform: translateY(-5px);
-          border-color: ${ORANGE}40 !important;
-          box-shadow: 0 10px 30px -10px ${c.accentGlow};
-        }
+        {/* Background Grid Nativo */}
+        <div className="pointer-events-none absolute inset-0 z-0 opacity-50 bg-[linear-gradient(to_right,var(--color-zinc-200)_1px,transparent_1px),linear-gradient(to_bottom,var(--color-zinc-200)_1px,transparent_1px)] bg-size-[40px_40px] mask-[radial-gradient(circle_at_50%_0%,black,transparent_70%)] dark:bg-[linear-gradient(to_right,#232326_1px,transparent_1px),linear-gradient(to_bottom,#232326_1px,transparent_1px)]" />
 
-        .bg-grid {
-          position: absolute;
-          top: 0; left: 0; right: 0; bottom: 0;
-          background-image: 
-            linear-gradient(to right, ${c.border} 1px, transparent 1px),
-            linear-gradient(to bottom, ${c.border} 1px, transparent 1px);
-          background-size: 40px 40px;
-          mask-image: radial-gradient(circle at 50% 0%, black, transparent 70%);
-          -webkit-mask-image: radial-gradient(circle at 50% 0%, black, transparent 70%);
-          pointer-events: none;
-          z-index: 0;
-          opacity: 0.5;
-        }
-
-        .dash-bg-grid {
-          background-image: 
-            linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-          background-size: 30px 30px;
-        }
-
-        /* MEDIA QUERIES RESPONSIVAS PRO (Sobreescritura de estilos en línea en móviles) */
-        @media (max-width: 768px) {
-          /* Header */
-          .resp-header { padding: 12px 16px !important; }
-          .resp-nav { display: none !important; }
-          .resp-lang-btn { padding: 6px 8px !important; font-size: 11px !important; }
-          
-          /* Hero */
-          .resp-hero { padding: 60px 16px 40px !important; }
-          .resp-hero-title { font-size: clamp(32px, 8vw, 42px) !important; }
-          .resp-hero-buttons { flex-direction: column !important; gap: 12px !important; width: 100% !important; }
-          .resp-hero-buttons > * { width: 100% !important; justify-content: center !important; }
-          
-          /* Dashboard Mockup */
-          .resp-mockup-wrapper { padding: 0 16px 60px !important; }
-          .resp-mockup-container { flex-direction: column !important; height: 600px !important; }
-          .resp-mockup-sidebar { 
-            width: 100% !important; 
-            height: auto !important;
-            flex-direction: row !important; 
-            align-items: center !important; 
-            justify-content: space-between !important;
-            border-right: none !important; 
-            border-bottom: 1px solid ${DASH_BORDER} !important;
-          }
-          .resp-mockup-logo-area { border-bottom: none !important; padding: 12px 16px !important; }
-          .resp-mockup-nav { display: none !important; }
-          .resp-mockup-status { border-top: none !important; padding: 0 16px !important; background: transparent !important; }
-          .resp-mockup-chat { padding: 16px !important; gap: 16px !important; }
-          .resp-mockup-bubble { max-width: 95% !important; padding: 12px 16px !important; font-size: 13px !important; }
-          
-          /* Secciones (About, How, Features) */
-          .resp-section { padding: 40px 16px 60px !important; }
-          .resp-grid { grid-template-columns: 1fr !important; }
-          
-          /* Footer */
-          .resp-footer { flex-direction: column !important; gap: 16px !important; text-align: center !important; justify-content: center !important; }
-        }
-      `}} />
-
-      <div className="bg-grid" />
-
-      {/* HEADER */}
-      <header
-        className="resp-header"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '16px 24px',
-          borderBottom: `1px solid ${c.navBorder}`,
-          position: 'sticky',
-          top: 0,
-          background: c.glass,
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-          zIndex: 50,
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, fontSize: 18, letterSpacing: '-0.02em' }}>
-          <span
-            style={{
-              width: 26,
-              height: 26,
-              background: `${ORANGE}1A`,
-              border: `1px solid ${ORANGE}33`,
-              borderRadius: 8,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Zap size={15} color={ORANGE} strokeWidth={2.5} />
-          </span>
-          NovaBank <span style={{ color: ORANGE }}>AI</span>
-        </div>
-
-        <nav className="resp-nav" style={{ display: 'flex', gap: 28, fontSize: 14, color: c.muted, fontWeight: 500 }}>
-          <a href="#about" style={{ textDecoration: 'none', color: 'inherit', transition: 'color 0.2s' }} onMouseOver={e => e.currentTarget.style.color = c.text} onMouseOut={e => e.currentTarget.style.color = c.muted}>{t.nav.about}</a>
-          <a href="#how" style={{ textDecoration: 'none', color: 'inherit', transition: 'color 0.2s' }} onMouseOver={e => e.currentTarget.style.color = c.text} onMouseOut={e => e.currentTarget.style.color = c.muted}>{t.nav.how}</a>
-          <a href="#features" style={{ textDecoration: 'none', color: 'inherit', transition: 'color 0.2s' }} onMouseOver={e => e.currentTarget.style.color = c.text} onMouseOut={e => e.currentTarget.style.color = c.muted}>{t.nav.features}</a>
-        </nav>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ display: 'flex', border: `1px solid ${c.border}`, borderRadius: 8, overflow: 'hidden', background: c.surface }}>
-            {locales.map(({ code, label }) => (
-              <button
-                key={code}
-                className="resp-lang-btn"
-                onClick={() => setLocale(code)}
-                style={{
-                  padding: '6px 12px',
-                  fontSize: 12,
-                  fontWeight: 600,
-                  background: locale === code ? ORANGE : 'transparent',
-                  color: locale === code ? ORANGE_TEXT_ON : c.muted,
-                  border: 'none',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                }}
-              >
-                {label}
-              </button>
-            ))}
+        {/* HEADER */}
+        <header className="sticky top-0 z-50 flex items-center justify-between border-b border-zinc-200/70 bg-white/80 px-4 py-3 backdrop-blur-xl md:px-6 md:py-4 dark:border-[#1C1C1F]/70 dark:bg-[#0A0A0B]/80">
+          <div className="flex items-center gap-2 text-lg font-bold tracking-tight">
+            <span className="flex h-6 w-6 items-center justify-center rounded-lg border border-orange-500/20 bg-orange-500/10">
+              <Zap size={15} className="text-orange-500" strokeWidth={2.5} />
+            </span>
+            NovaBank <span className="text-orange-500">AI</span>
           </div>
 
-          <button
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            aria-label="Cambiar tema"
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: 8,
-              border: `1px solid ${c.border}`,
-              background: c.surface,
-              color: c.text,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              flexShrink: 0
-            }}
-          >
-            {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-          </button>
+          <nav className="hidden gap-7 text-sm font-medium text-zinc-500 md:flex dark:text-[#9B9B9F]">
+            <a href="#about" className="transition-colors hover:text-zinc-900 dark:hover:text-[#F5F5F4]">{t.nav.about}</a>
+            <a href="#how" className="transition-colors hover:text-zinc-900 dark:hover:text-[#F5F5F4]">{t.nav.how}</a>
+            <a href="#features" className="transition-colors hover:text-zinc-900 dark:hover:text-[#F5F5F4]">{t.nav.features}</a>
+          </nav>
 
-          <Link
-            href="/chat"
-            className="resp-nav" // Se oculta en móviles muy pequeños para dar prioridad a acciones primarias si es necesario (opcional)
-            style={{
-              background: ORANGE,
-              color: ORANGE_TEXT_ON,
-              fontWeight: 600,
-              padding: '9px 20px',
-              borderRadius: 8,
-              fontSize: 14,
-              textDecoration: 'none',
-              boxShadow: `0 4px 14px ${c.accentGlow}`,
-              transition: 'transform 0.2s',
-              whiteSpace: 'nowrap'
-            }}
-            onMouseOver={e => e.currentTarget.style.transform = 'translateY(-1px)'}
-            onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
-          >
-            {t.nav.cta}
-          </Link>
-        </div>
-      </header>
+          <div className="flex items-center gap-3">
+            {/* Selector de Idioma */}
+            <div className="flex overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50 dark:border-[#232326] dark:bg-[#141416]">
+              {locales.map(({ code, label }) => (
+                <button
+                  key={code}
+                  onClick={() => setLocale(code)}
+                  data-active={locale === code}
+                  className="px-2 py-1.5 text-[11px] font-semibold transition-all data-[active=true]:bg-orange-500 data-[active=true]:text-[#210D00] data-[active=false]:text-zinc-500 hover:data-[active=false]:bg-zinc-200 md:px-3 md:text-xs dark:data-[active=false]:text-[#9B9B9F] dark:hover:data-[active=false]:bg-[#232326]"
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
 
-      <main style={{ position: 'relative', zIndex: 10 }}>
-        {/* HERO SECTION */}
-        <section className="reveal-on-scroll resp-hero" style={{ textAlign: 'center', padding: '100px 24px 64px' }}>
-          <div
-            style={{
-              fontFamily: 'monospace',
-              color: ORANGE,
-              fontSize: 13,
-              letterSpacing: '0.05em',
-              marginBottom: 20,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 8,
-              background: c.accentGlow,
-              padding: '6px 12px',
-              borderRadius: 20,
-              border: `1px solid ${ORANGE}30`
-            }}
-          >
-            <ShieldCheck size={14} />
-            {t.hero.eyebrow}
-          </div>
-          <h1
-            className="resp-hero-title"
-            style={{
-              fontSize: 'clamp(36px, 5vw, 56px)',
-              fontWeight: 800,
-              lineHeight: 1.1,
-              maxWidth: 720,
-              margin: '0 auto 24px',
-              letterSpacing: '-0.02em',
-            }}
-          >
-            {t.hero.headline}
-          </h1>
-          <p style={{ color: c.muted, fontSize: 18, maxWidth: 520, margin: '0 auto 36px', lineHeight: 1.5 }}>
-            {t.hero.subhead}
-          </p>
-          <div className="resp-hero-buttons" style={{ display: 'flex', gap: 14, justifyContent: 'center', marginBottom: 24, marginInline: 'auto' }}>
+            {/* Toggle Theme */}
+            <button
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              aria-label="Cambiar tema"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-zinc-50 text-zinc-900 transition-colors hover:bg-zinc-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 dark:border-[#232326] dark:bg-[#141416] dark:text-[#F5F5F4] dark:hover:bg-[#232326]"
+            >
+              {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
+
             <Link
               href="/chat"
-              style={{
-                background: ORANGE,
-                color: ORANGE_TEXT_ON,
-                fontWeight: 600,
-                padding: '14px 28px',
-                borderRadius: 10,
-                fontSize: 16,
-                textDecoration: 'none',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 8,
-                boxShadow: `0 8px 20px ${c.accentGlow}`,
-              }}
+              className="hidden whitespace-nowrap rounded-lg bg-orange-500 px-5 py-2.5 text-sm font-semibold text-[#210D00] shadow-[0_4px_14px_rgba(249,115,22,0.15)] transition-transform hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 md:inline-flex"
             >
-              {t.hero.ctaPrimary} <ArrowRight size={18} />
+              {t.nav.cta}
             </Link>
-            <a
-              href="#how"
-              style={{
-                background: c.surface,
-                color: c.text,
-                fontWeight: 600,
-                padding: '14px 28px',
-                borderRadius: 10,
-                fontSize: 16,
-                border: `1px solid ${c.border}`,
-                textDecoration: 'none',
-                display: 'inline-flex',
-                alignItems: 'center'
-              }}
-            >
-              {t.hero.ctaSecondary}
-            </a>
           </div>
-          <div style={{ fontFamily: 'monospace', color: c.mutedSoft, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-            <Lock size={12} /> {t.hero.trust}
-          </div>
-        </section>
+        </header>
 
-        {/* DASHBOARD MOCKUP SECTION */}
-        <section className="reveal-on-scroll delay-1 resp-mockup-wrapper" style={{ padding: '0 24px 80px', display: 'flex', justifyContent: 'center' }}>
-          <div
-            className="resp-mockup-container"
-            style={{
-              width: '100%',
-              maxWidth: 880,
-              background: DASH_BG,
-              border: `1px solid ${c.border}`,
-              borderRadius: 16,
-              overflow: 'hidden',
-              display: 'flex',
-              flexDirection: 'row',
-              boxShadow: `0 24px 50px -12px rgba(0,0,0,0.4)`,
-              height: 520, 
-            }}
-          >
-            {/* Sidebar Realista */}
-            <div className="resp-mockup-sidebar" style={{ width: 240, background: DASH_SIDEBAR, borderRight: `1px solid ${DASH_BORDER}`, display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+        <main className="relative z-10">
+          {/* HERO SECTION */}
+          <section className="reveal-on-scroll px-4 pb-10 pt-16 text-center opacity-0 transition-all duration-700 ease-[cubic-bezier(0.5,0,0,1)] data-[visible=true]:opacity-100 data-[visible=true]:translate-y-0 md:pb-16 md:pt-24">
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-orange-500/20 bg-orange-500/10 px-3 py-1.5 font-mono text-[13px] tracking-wider text-orange-500 dark:bg-orange-500/5">
+              <ShieldCheck size={14} />
+              {t.hero.eyebrow}
+            </div>
+            
+            <h1 className="mx-auto mb-6 max-w-180 text-[clamp(32px,8vw,56px)] font-extrabold leading-[1.1] tracking-tight text-zinc-900 dark:text-zinc-100">
+              {t.hero.headline}
+            </h1>
+            
+            <p className="mx-auto mb-9 max-w-130 text-[17px] leading-relaxed text-zinc-600 md:text-lg dark:text-[#9B9B9F]">
+              {t.hero.subhead}
+            </p>
+            
+            <div className="mx-auto mb-6 flex w-full flex-col justify-center gap-3 sm:w-auto sm:flex-row md:gap-4">
+              <Link
+                href="/chat"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-orange-500 px-7 py-3.5 text-base font-semibold text-[#210D00] shadow-[0_8px_20px_rgba(249,115,22,0.15)] transition-transform hover:scale-[1.02] sm:w-auto"
+              >
+                {t.hero.ctaPrimary} <ArrowRight size={18} />
+              </Link>
+              <a
+                href="#how"
+                className="inline-flex w-full items-center justify-center rounded-xl border border-zinc-200 bg-zinc-50 px-7 py-3.5 text-base font-semibold text-zinc-900 transition-colors hover:bg-zinc-100 sm:w-auto dark:border-[#232326] dark:bg-[#141416] dark:text-[#F5F5F4] dark:hover:bg-[#1c1c1f]"
+              >
+                {t.hero.ctaSecondary}
+              </a>
+            </div>
+            
+            <div className="flex items-center justify-center gap-1.5 font-mono text-[13px] text-zinc-500 dark:text-[#6b6b70]">
+              <Lock size={12} /> {t.hero.trust}
+            </div>
+          </section>
+
+          {/* DASHBOARD MOCKUP SECTION */}
+          <section className="reveal-on-scroll flex justify-center px-4 pb-16 opacity-0 delay-100 transition-all duration-700 ease-[cubic-bezier(0.5,0,0,1)] data-[visible=true]:opacity-100 data-[visible=true]:translate-y-0 md:pb-20">
+            <div className="flex h-150 w-full max-w-220 flex-col overflow-hidden rounded-2xl border border-zinc-800/50 bg-[#09090b] shadow-[0_24px_50px_-12px_rgba(0,0,0,0.4)] md:h-130 md:flex-row">
               
-              {/* Logo Area */}
-              <div className="resp-mockup-logo-area" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '20px 24px', borderBottom: `1px solid ${DASH_BORDER}` }}>
-                <div style={{ background: `${ORANGE}1A`, padding: '8px', borderRadius: '12px', border: `1px solid ${ORANGE}33` }}>
-                  <Zap size={20} color={ORANGE} />
+              {/* Sidebar Realista */}
+              <div className="flex w-full shrink-0 flex-row items-center justify-between border-b border-zinc-800/50 bg-[#0c0c0e] md:w-60 md:flex-col md:items-stretch md:justify-start md:border-b-0 md:border-r">
+                <div className="flex items-center gap-3 border-zinc-800/50 p-3 md:border-b md:p-5">
+                  <div className="rounded-xl border border-orange-500/20 bg-orange-500/10 p-2">
+                    <Zap size={20} className="text-orange-500" />
+                  </div>
+                  <div>
+                    <div className="text-base font-bold tracking-wide text-white">NOVA<span className="text-orange-500">AI</span></div>
+                    <div className="text-[9px] font-bold tracking-[0.15em] text-orange-500/70">INTERNAL SYSTEM</div>
+                  </div>
                 </div>
-                <div>
-                  <div style={{ color: 'white', fontWeight: 700, fontSize: 16, letterSpacing: '0.02em' }}>NOVA<span style={{ color: ORANGE }}>AI</span></div>
-                  <div style={{ color: `${ORANGE}B3`, fontSize: 9, fontWeight: 700, letterSpacing: '0.15em' }}>INTERNAL SYSTEM</div>
+
+                <div className="hidden flex-1 flex-col gap-2 p-4 md:flex">
+                  <div className="flex items-center gap-3 rounded-xl border border-orange-500/20 bg-orange-500/10 px-4 py-3 text-[13px] font-semibold text-orange-500 shadow-[0_0_15px_rgba(249,115,22,0.1)]">
+                    <Bot size={18} /> Centro de Mando
+                  </div>
+                  <div className="flex items-center gap-3 px-4 py-3 text-[13px] font-semibold text-zinc-500 hover:text-zinc-300">
+                    <Database size={18} /> Base de Conocimiento
+                  </div>
+                  <div className="flex items-center gap-3 px-4 py-3 text-[13px] font-semibold text-zinc-500 hover:text-zinc-300">
+                    <Activity size={18} /> Monitoreo RAG
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-center gap-2.5 bg-transparent px-4 font-mono text-[11px] text-zinc-500 md:border-t md:border-zinc-800/50 md:bg-[#0a0a0c] md:p-4">
+                  <div className="h-2 w-2 rounded-full bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.8)]" />
+                  SYS_OK / 248 DOCS
                 </div>
               </div>
 
-              {/* Navigation */}
-              <div className="resp-mockup-nav" style={{ padding: '16px', flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: `${ORANGE}1A`, border: `1px solid ${ORANGE}33`, borderRadius: '12px', color: ORANGE, fontSize: 13, fontWeight: 600, boxShadow: `0 0 15px ${ORANGE}1A` }}>
-                  <Bot size={18} /> Centro de Mando
+              {/* Main Chat Area */}
+              <div className="relative flex flex-1 flex-col bg-[linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-size-[30px_30px]">
+                <div className="z-10 flex h-20 shrink-0 flex-col items-center justify-center border-b border-zinc-800/50 bg-zinc-950/80 backdrop-blur-xl">
+                  <div className="flex items-center gap-2.5">
+                    <ShieldAlert size={22} className="text-orange-500" />
+                    <div className="text-2xl font-extrabold tracking-tight text-white">NOVA<span className="text-orange-500">BANK</span></div>
+                  </div>
+                  <div className="mt-1 text-[9px] font-semibold tracking-[0.3em] text-zinc-500">FINANCIAL INTELLIGENCE PLATFORM</div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', color: '#71717a', fontSize: 13, fontWeight: 600 }}>
-                  <Database size={18} /> Base de Conocimiento
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', color: '#71717a', fontSize: 13, fontWeight: 600 }}>
-                  <Activity size={18} /> Monitoreo RAG
-                </div>
-              </div>
 
-              {/* Status Strip */}
-              <div className="resp-mockup-status" style={{ padding: '16px', borderTop: `1px solid ${DASH_BORDER}`, background: '#0a0a0c', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 10, fontSize: 11, color: '#71717a', fontFamily: 'monospace' }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: ORANGE, boxShadow: `0 0 8px ${ORANGE}CC` }} />
-                SYS_OK / 248 DOCS
+                {/* Chat Feed */}
+                <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4 pb-8 md:gap-6 md:p-8">
+                  
+                  {/* Agent Welcome Message */}
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-zinc-800/50 bg-zinc-900">
+                      <Bot size={18} className="text-orange-500" />
+                    </div>
+                    <div className="max-w-[95%] rounded-[6px_20px_20px_20px] border border-zinc-800/50 bg-[#121215] p-3 text-[13px] leading-relaxed text-zinc-300 md:max-w-[80%] md:p-4 md:text-sm">
+                      Bienvenido al Centro de Mando de NovaBank. Soy tu agente RAG de Compliance. ¿En qué te puedo ayudar hoy?
+                    </div>
+                  </div>
+
+                  {/* User Message */}
+                  <div className="flex justify-end">
+                    <div className="max-w-[95%] rounded-[20px_20px_6px_20px] bg-orange-500 p-3 text-[13px] font-medium text-[#210D00] shadow-[0_4px_15px_rgba(249,115,22,0.2)] md:max-w-[80%] md:p-4 md:text-sm">
+                      {t.hero.mockupQuestion}
+                    </div>
+                  </div>
+
+                  {/* Agent Response */}
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-zinc-800/50 bg-zinc-900">
+                      <Bot size={18} className="text-orange-500" />
+                    </div>
+                    <div className="max-w-[95%] rounded-[6px_20px_20px_20px] border border-zinc-800/50 bg-[#121215] p-3 text-[13px] leading-relaxed text-zinc-300 md:max-w-[85%] md:p-4 md:text-sm">
+                      {t.hero.mockupAnswer}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
+          </section>
 
-            {/* Main Chat Area */}
-            <div className="dash-bg-grid" style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
-              {/* Dashboard Header */}
-              <div style={{ height: '80px', borderBottom: `1px solid ${DASH_BORDER}`, background: 'rgba(9, 9, 11, 0.8)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', flexShrink: 0, zIndex: 10 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <ShieldAlert size={22} color={ORANGE} />
-                  <div style={{ color: 'white', fontWeight: 800, fontSize: 24, letterSpacing: '-0.05em' }}>NOVA<span style={{ color: ORANGE }}>BANK</span></div>
+          {/* ABOUT SECTION */}
+          <section id="about" className="reveal-on-scroll mx-auto max-w-240 px-4 py-10 opacity-0 transition-all duration-700 ease-[cubic-bezier(0.5,0,0,1)] data-[visible=true]:opacity-100 data-[visible=true]:translate-y-0 md:py-20">
+            <div className="mb-3 text-center font-mono text-[13px] font-semibold text-orange-500">
+              {t.about.eyebrow}
+            </div>
+            <h2 className="mb-10 text-center text-3xl font-extrabold tracking-tight md:mb-12 md:text-4xl">
+              {t.about.title}
+            </h2>
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-[repeat(auto-fit,minmax(320px,1fr))]">
+              <div className="group rounded-2xl border border-zinc-200 bg-zinc-50 p-8 transition-all duration-300 hover:-translate-y-1 hover:border-orange-500/40 hover:shadow-[0_10px_30px_-10px_rgba(249,115,22,0.15)] dark:border-[#232326] dark:bg-[#141416]">
+                <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-zinc-200/50 dark:bg-[#1c1c1f]">
+                  <ShieldCheck size={24} className="text-orange-500" />
                 </div>
-                <div style={{ fontSize: 9, color: '#71717a', letterSpacing: '0.3em', marginTop: 4, fontWeight: 600 }}>FINANCIAL INTELLIGENCE PLATFORM</div>
+                <div className="mb-3 text-xl font-bold">{t.about.novabankTitle}</div>
+                <p className="text-[15px] leading-relaxed text-zinc-600 dark:text-[#9B9B9F]">{t.about.novabankBody}</p>
               </div>
-
-              {/* Chat Feed */}
-              <div className="resp-mockup-chat" style={{ flex: 1, padding: '24px 32px', display: 'flex', flexDirection: 'column', gap: 24, overflowY: 'auto', paddingBottom: 32 }}>
-                
-                {/* Agent Welcome Message */}
-                <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
-                  <div style={{ width: 36, height: 36, borderRadius: '10px', background: '#18181b', border: `1px solid ${DASH_BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <Bot size={18} color={ORANGE} />
-                  </div>
-                  <div className="resp-mockup-bubble" style={{ background: DASH_BUBBLE, border: `1px solid ${DASH_BORDER}`, color: '#d4d4d8', fontSize: 14, padding: '16px 20px', borderRadius: '6px 20px 20px 20px', maxWidth: '80%', lineHeight: 1.5 }}>
-                    Bienvenido al Centro de Mando de NovaBank. Soy tu agente RAG de Compliance. ¿En qué te puedo ayudar hoy?
-                  </div>
+              <div className="group rounded-2xl border border-zinc-200 bg-zinc-50 p-8 transition-all duration-300 hover:-translate-y-1 hover:border-orange-500/40 hover:shadow-[0_10px_30px_-10px_rgba(249,115,22,0.15)] dark:border-[#232326] dark:bg-[#141416]">
+                <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-zinc-200/50 dark:bg-[#1c1c1f]">
+                  <MessageCircle size={24} className="text-orange-500" />
                 </div>
-
-                {/* User Message */}
-                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                  <div className="resp-mockup-bubble" style={{ background: ORANGE, color: ORANGE_TEXT_ON, fontSize: 14, fontWeight: 500, padding: '16px 20px', borderRadius: '20px 20px 6px 20px', maxWidth: '80%', boxShadow: `0 4px 15px ${ORANGE}33` }}>
-                    {t.hero.mockupQuestion}
-                  </div>
-                </div>
-
-                {/* Agent Response */}
-                <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
-                  <div style={{ width: 36, height: 36, borderRadius: '10px', background: '#18181b', border: `1px solid ${DASH_BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <Bot size={18} color={ORANGE} />
-                  </div>
-                  <div className="resp-mockup-bubble" style={{ background: DASH_BUBBLE, border: `1px solid ${DASH_BORDER}`, color: '#d4d4d8', fontSize: 14, padding: '16px 20px', borderRadius: '6px 20px 20px 20px', maxWidth: '85%', lineHeight: 1.6 }}>
-                    {t.hero.mockupAnswer}
-                  </div>
-                </div>
-
+                <div className="mb-3 text-xl font-bold">{t.about.novabankAiTitle}</div>
+                <p className="text-[15px] leading-relaxed text-zinc-600 dark:text-[#9B9B9F]">{t.about.novabankAiBody}</p>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
 
-        {/* ABOUT SECTION */}
-        <section id="about" className="reveal-on-scroll resp-section" style={{ padding: '32px 24px 80px', maxWidth: 960, margin: '0 auto' }}>
-          <div style={{ fontFamily: 'monospace', color: ORANGE, fontSize: 13, marginBottom: 12, textAlign: 'center', fontWeight: 600 }}>
-            {t.about.eyebrow}
-          </div>
-          <h2 style={{ fontSize: 32, fontWeight: 800, textAlign: 'center', marginBottom: 48, letterSpacing: '-0.02em' }}>
-            {t.about.title}
-          </h2>
-          <div className="resp-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24 }}>
-            <div className="fintech-card" style={{ background: c.surface, border: `1px solid ${c.border}`, borderRadius: 16, padding: 32 }}>
-              <div style={{ width: 48, height: 48, background: c.iconBg, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
-                <ShieldCheck size={24} color={ORANGE} />
-              </div>
-              <div style={{ fontWeight: 700, fontSize: 20, marginBottom: 12 }}>{t.about.novabankTitle}</div>
-              <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.6 }}>{t.about.novabankBody}</p>
+          {/* HOW IT WORKS SECTION */}
+          <section id="how" className="reveal-on-scroll mx-auto max-w-5xl px-4 py-10 opacity-0 delay-100 transition-all duration-700 ease-[cubic-bezier(0.5,0,0,1)] data-[visible=true]:opacity-100 data-[visible=true]:translate-y-0 md:py-20">
+            <div className="mb-3 text-center font-mono text-[13px] font-semibold text-orange-500">
+              {t.how.eyebrow}
             </div>
-            <div className="fintech-card" style={{ background: c.surface, border: `1px solid ${c.border}`, borderRadius: 16, padding: 32 }}>
-              <div style={{ width: 48, height: 48, background: c.iconBg, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
-                <MessageCircle size={24} color={ORANGE} />
-              </div>
-              <div style={{ fontWeight: 700, fontSize: 20, marginBottom: 12 }}>{t.about.novabankAiTitle}</div>
-              <p style={{ color: c.muted, fontSize: 15, lineHeight: 1.6 }}>{t.about.novabankAiBody}</p>
-            </div>
-          </div>
-        </section>
-
-        {/* HOW IT WORKS SECTION */}
-        <section id="how" className="reveal-on-scroll delay-1 resp-section" style={{ padding: '32px 24px 80px', maxWidth: 1024, margin: '0 auto' }}>
-          <div style={{ fontFamily: 'monospace', color: ORANGE, fontSize: 13, marginBottom: 12, textAlign: 'center', fontWeight: 600 }}>
-            {t.how.eyebrow}
-          </div>
-          <h2 style={{ fontSize: 32, fontWeight: 800, textAlign: 'center', marginBottom: 56, letterSpacing: '-0.02em' }}>
-            {t.how.title}
-          </h2>
-          <div className="resp-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 32 }}>
-            {t.how.steps.map((step, i) => (
-              <div key={step.title} style={{ position: 'relative' }}>
-                <div style={{ fontFamily: 'monospace', color: c.border, fontSize: 64, fontWeight: 800, position: 'absolute', top: -35, left: -10, zIndex: -1, opacity: 0.5 }}>
-                  {String(i + 1).padStart(2, '0')}
+            <h2 className="mb-12 text-center text-3xl font-extrabold tracking-tight md:mb-14 md:text-4xl">
+              {t.how.title}
+            </h2>
+            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-[repeat(auto-fit,minmax(240px,1fr))]">
+              {t.how.steps.map((step, i) => (
+                <div key={step.title} className="relative pt-4">
+                  <div className="absolute -left-2 -top-6 -z-10 font-mono text-[64px] font-extrabold opacity-30 text-zinc-200 dark:text-[#232326]">
+                    {String(i + 1).padStart(2, '0')}
+                  </div>
+                  <div className="mb-2.5 text-lg font-bold">{step.title}</div>
+                  <p className="text-sm leading-relaxed text-zinc-600 dark:text-[#9B9B9F]">{step.body}</p>
                 </div>
-                <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 10 }}>{step.title}</div>
-                <p style={{ color: c.muted, fontSize: 14, lineHeight: 1.6 }}>{step.body}</p>
-              </div>
-            ))}
-          </div>
-        </section>
+              ))}
+            </div>
+          </section>
 
-        {/* FEATURES SECTION */}
-        <section id="features" className="reveal-on-scroll delay-2 resp-section" style={{ padding: '32px 24px 96px', maxWidth: 960, margin: '0 auto' }}>
-          <div style={{ fontFamily: 'monospace', color: ORANGE, fontSize: 13, marginBottom: 12, textAlign: 'center', fontWeight: 600 }}>
-            {t.features.eyebrow}
-          </div>
-          <h2 style={{ fontSize: 32, fontWeight: 800, textAlign: 'center', marginBottom: 48, letterSpacing: '-0.02em' }}>
-            {t.features.title}
-          </h2>
-          <div className="resp-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 20 }}>
-            {t.features.items.map((item, i) => {
-              const Icon = FEATURE_ICONS[i % FEATURE_ICONS.length];
-              return (
-                <div
-                  key={item.title}
-                  className="fintech-card"
-                  style={{ background: c.surface, border: `1px solid ${c.border}`, borderRadius: 16, padding: 24 }}
-                >
+          {/* FEATURES SECTION */}
+          <section id="features" className="reveal-on-scroll mx-auto max-w-240 px-4 py-10 pb-20 opacity-0 delay-200 transition-all duration-700 ease-[cubic-bezier(0.5,0,0,1)] data-[visible=true]:opacity-100 data-[visible=true]:translate-y-0 md:py-20 md:pb-24">
+            <div className="mb-3 text-center font-mono text-[13px] font-semibold text-orange-500">
+              {t.features.eyebrow}
+            </div>
+            <h2 className="mb-10 text-center text-3xl font-extrabold tracking-tight md:mb-12 md:text-4xl">
+              {t.features.title}
+            </h2>
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">
+              {t.features.items.map((item, i) => {
+                const Icon = FEATURE_ICONS[i % FEATURE_ICONS.length];
+                return (
                   <div
-                    style={{
-                      width: 40,
-                      height: 40,
-                      background: c.iconBg,
-                      borderRadius: 10,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      marginBottom: 16,
-                    }}
+                    key={item.title}
+                    className="group rounded-2xl border border-zinc-200 bg-zinc-50 p-6 transition-all duration-300 hover:-translate-y-1 hover:border-orange-500/40 hover:shadow-[0_10px_30px_-10px_rgba(249,115,22,0.15)] dark:border-[#232326] dark:bg-[#141416]"
                   >
-                    <Icon size={20} color={ORANGE} />
+                    <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-200/50 dark:bg-[#1c1c1f]">
+                      <Icon size={20} className="text-orange-500" />
+                    </div>
+                    <div className="mb-2 text-base font-bold">{item.title}</div>
+                    <p className="text-[13.5px] leading-relaxed text-zinc-600 dark:text-[#9B9B9F]">{item.body}</p>
                   </div>
-                  <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 8 }}>{item.title}</div>
-                  <p style={{ color: c.muted, fontSize: 13.5, lineHeight: 1.6 }}>{item.body}</p>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      </main>
+                );
+              })}
+            </div>
+          </section>
+        </main>
 
-      {/* FOOTER */}
-      <footer
-        className="resp-footer"
-        style={{
-          borderTop: `1px solid ${c.navBorder}`,
-          padding: '32px 24px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          fontSize: 13,
-          color: c.mutedSoft,
-          position: 'relative',
-          zIndex: 10,
-          background: c.bg,
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <ShieldCheck size={14} />
-          <span>{t.footer.rights}</span>
-        </div>
-        <span style={{ fontFamily: 'monospace' }}>{t.footer.credit}</span>
-      </footer>
+        {/* FOOTER */}
+        <footer className="relative z-10 flex flex-col items-center justify-between gap-4 border-t border-zinc-200/70 bg-white px-6 py-8 text-center text-[13px] text-zinc-500 md:flex-row md:text-left dark:border-[#1C1C1F]/70 dark:bg-[#0A0A0B] dark:text-[#6b6b70]">
+          <div className="flex items-center gap-1.5">
+            <ShieldCheck size={14} />
+            <span>{t.footer.rights}</span>
+          </div>
+          <span className="font-mono">{t.footer.credit}</span>
+        </footer>
+      </div>
     </div>
   );
 }

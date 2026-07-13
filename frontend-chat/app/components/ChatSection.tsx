@@ -111,7 +111,7 @@ export default function ChatSection({ messages, setMessages }: ChatSectionProps)
             className={`flex gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
           >
             <div
-              className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg ${msg.role === 'user'
+              className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 shadow-lg ${msg.role === 'user'
                 ? 'bg-orange-500 text-black'
                 : 'bg-zinc-900 border border-zinc-800 text-orange-500'
                 }`}
