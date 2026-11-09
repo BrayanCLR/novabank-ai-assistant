@@ -1,29 +1,28 @@
--- Se ejecuta automáticamente la PRIMERA vez que se crea el contenedor
-ALTER SESSION SET CONTAINER = FREEPDB1;
+CREATE EXTENSION IF NOT EXISTS vector;
 
-CREATE USER novabank IDENTIFIED BY "NovaBank_2026_Segura!";
-GRANT DB_DEVELOPER_ROLE TO novabank;
-GRANT UNLIMITED TABLESPACE TO novabank;
+CREATE TABLE
+  IF NOT EXISTS knowledge_vectors (
+    id BIGSERIAL PRIMARY KEY,
+    file_name VARCHAR(500) NOT NULL,
+    chunk_index INTEGER NOT NULL,
+    chunk_text TEXT NOT NULL,
+    embedding VECTOR (768) NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW ()
+  );
 
-ALTER SESSION SET CURRENT_SCHEMA = novabank;
+CREATE TABLE
+  IF NOT EXISTS chat_sessions (
+    id BIGSERIAL PRIMARY KEY,
+    session_id VARCHAR(100) NOT NULL,
+    role VARCHAR(10) NOT NULL CHECK (role IN ('user', 'agent')),
+    content TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW ()
+  );
 
-CREATE TABLE knowledge_vectors (
-  id           NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  file_name    VARCHAR2(500) NOT NULL,
-  chunk_index  NUMBER NOT NULL,
-  chunk_text   CLOB NOT NULL,
-  embedding    VECTOR(768, FLOAT32) NOT NULL,
-  created_at   TIMESTAMP DEFAULT SYSTIMESTAMP
-);
+CREATE INDEX IF NOT EXISTS idx_chat_session ON chat_sessions (session_id, created_at);
 
-CREATE TABLE chat_sessions (
-  id          NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  session_id  VARCHAR2(100) NOT NULL,
-  role        VARCHAR2(10) NOT NULL CHECK (role IN ('user','agent')),
-  content     CLOB NOT NULL,
-  created_at  TIMESTAMP DEFAULT SYSTIMESTAMP
-);
+CREATE INDEX IF NOT EXISTS idx_kv_file ON knowledge_vectors (file_name);
 
-CREATE INDEX idx_chat_session ON chat_sessions(session_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_kv_embedding ON knowledge_vectors USING hnsw (embedding vector_cosine_ops);
 
 COMMIT;
