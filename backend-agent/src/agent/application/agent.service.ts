@@ -27,14 +27,14 @@ export class AgentService {
       `1. Iniciando procesamiento para la sesión: ${normalizedSessionId}`,
     );
 
-    // A. Guardamos la nueva pregunta del usuario en Oracle antes de procesar
+    // A. Guardamos el mensaje del usuario en la base de datos.
     await this.chatHistoryService.saveMessage(
       normalizedSessionId,
       'user',
       userMessage,
     );
 
-    // B. Recuperamos la memoria a corto plazo de Oracle (ej. los últimos 7 mensajes)
+    // B. Recuperamos la memoria del usuario ( 7 turnos máximo)
     const rawHistory = await this.chatHistoryService.getHistory(
       normalizedSessionId,
       7,

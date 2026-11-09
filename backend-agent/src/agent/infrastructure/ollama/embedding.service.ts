@@ -4,32 +4,34 @@ import {
   Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { GoogleGenAI } from '@google/genai';
-
-export type EmbeddingTaskType = 'RETRIEVAL_DOCUMENT' | 'RETRIEVAL_QUERY';
 
 @Injectable()
 export class EmbeddingService {
   private readonly logger = new Logger(EmbeddingService.name);
-  private readonly client: GoogleGenAI;
   private readonly modelName: string;
   private readonly embeddingTimeoutMs: number;
+  private readonly baseUrl: string;
 
   constructor(private readonly configService: ConfigService) {
-    const apiKey = this.configService.get<string>('GEMINI_API_KEY');
-    if (!apiKey) {
+    this.baseUrl = this.configService.get<string>(
+      'OLLAMA_BASE_URL',
+      'http://ollama.brayan.co:11434/',
+    );
+
+    if (!this.baseUrl) {
       throw new Error(
-        'CRÍTICO: GEMINI_API_KEY no encontrada en variables de entorno',
+        'CRÍTICO: OLLAMA_BASE_URL no encontrada en variables de entorno',
       );
     }
-    this.client = new GoogleGenAI({ apiKey });
-    this.modelName = this.configService.get<string>(
-      'EMBEDDING_MODEL',
-      'gemini-embedding-001',
-    );
+
     this.embeddingTimeoutMs = this.configService.get<number>(
       'EMBEDDING_TIMEOUT_MS',
       10000,
+    );
+
+    this.modelName = this.configService.get<string>(
+      'EMBEDDING_MODEL',
+      'nomic-embed-text',
     );
   }
 
@@ -62,22 +64,35 @@ export class EmbeddingService {
     });
   }
 
-  async embed(text: string, taskType: EmbeddingTaskType): Promise<number[]> {
+  async embed(text: string): Promise<number[]> {
     try {
-      const result = await this.withTimeout(
-        this.client.models.embedContent({
-          model: this.modelName,
-          contents: text,
-          config: { taskType, outputDimensionality: 768 },
+      const response = await this.withTimeout(
+        fetch(`${this.baseUrl.replace(/\/+$/, '')}/api/embeddings`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ model: this.modelName, prompt: text }),
         }),
         'Generación de embedding',
       );
 
-      const values = result.embeddings?.[0]?.values;
-      if (!values) {
+      if (!response.ok) {
         throw new Error('La API de embeddings no devolvió un vector.');
       }
-      return values;
+
+      const payload = (await response.json()) as unknown;
+
+      if (
+        !payload ||
+        typeof payload !== 'object' ||
+        !('embedding' in payload) ||
+        !Array.isArray(payload.embedding) ||
+        !payload.embedding.every((value) => typeof value === 'number') ||
+        payload.embedding.length !== 768
+      ) {
+        throw new Error('La API de embeddings no devolvió un vector válido.');
+      }
+
+      return payload.embedding;
     } catch (error) {
       this.logger.error('Error generando embedding', error as Error);
       throw new InternalServerErrorException(
@@ -86,21 +101,14 @@ export class EmbeddingService {
     }
   }
 
-  async embedBatch(
-    texts: string[],
-    taskType: EmbeddingTaskType,
-  ): Promise<number[][]> {
+  async embedBatch(texts: string[]): Promise<number[][]> {
     try {
-      const result = await this.withTimeout(
-        this.client.models.embedContent({
-          model: this.modelName,
-          contents: texts,
-          config: { taskType, outputDimensionality: 768 },
-        }),
+      const response = await this.withTimeout(
+        Promise.all(texts.map((text) => this.embed(text))),
         'Generación de embeddings en lote',
       );
 
-      const embeddings = result.embeddings?.map((e) => e.values ?? []);
+      const embeddings = response;
       if (!embeddings || embeddings.length !== texts.length) {
         throw new Error(
           'La cantidad de embeddings devueltos no coincide con los textos enviados.',
