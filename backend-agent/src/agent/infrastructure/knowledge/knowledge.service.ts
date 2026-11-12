@@ -1,8 +1,8 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import * as path from 'path';
-import { EmbeddingService } from '../gemini/embedding.service';
+import { EmbeddingService } from '../ollama/embedding.service';
 import { UniversalParser } from '../parsers/universal.parser';
-import { ObjectStorageService } from '../storage/object-storage.service';
+import { LocalStorageService } from '../storage/local-storage.service';
 import { withTempFile } from '../storage/temp-file.util';
 import { chunkText } from './chunking.util';
 import { EmbeddedChunk, VectorStoreService } from './vector-store.service';
@@ -21,7 +21,7 @@ export class KnowledgeService implements OnModuleInit {
     private readonly parser: UniversalParser,
     private readonly embeddingService: EmbeddingService,
     private readonly vectorStore: VectorStoreService,
-    private readonly objectStorageService: ObjectStorageService,
+    private readonly localStorage: LocalStorageService,
   ) {}
 
   async onModuleInit(): Promise<void> {
@@ -37,9 +37,9 @@ export class KnowledgeService implements OnModuleInit {
   }
 
   private async buildIndex(): Promise<void> {
-    this.logger.log('Construyendo índice vectorial desde Object Storage...');
+    this.logger.log('Construyendo índice vectorial desde local Storage...');
 
-    const objects = await this.objectStorageService.list();
+    const objects = await this.localStorage.list();
 
     const validObjects = objects.filter((obj) =>
       this.parser.supportedExtensions.includes(
@@ -52,7 +52,7 @@ export class KnowledgeService implements OnModuleInit {
 
     for (const obj of validObjects) {
       try {
-        const buffer = await this.objectStorageService.download(obj.name);
+        const buffer = await this.localStorage.download(obj.name);
         const extension = path.extname(obj.name);
 
         const parsed = await withTempFile(buffer, extension, (tempPath) =>
@@ -95,7 +95,6 @@ export class KnowledgeService implements OnModuleInit {
 
     const embeddings = await this.embeddingService.embedBatch(
       allChunks.map((c) => c.text),
-      'RETRIEVAL_DOCUMENT',
     );
 
     const embeddedChunks: EmbeddedChunk[] = allChunks.map((chunk, i) => ({
@@ -115,10 +114,7 @@ export class KnowledgeService implements OnModuleInit {
       return '';
     }
 
-    const queryEmbedding = await this.embeddingService.embed(
-      query,
-      'RETRIEVAL_QUERY',
-    );
+    const queryEmbedding = await this.embeddingService.embed(query);
     const relevantChunks = await this.vectorStore.search(
       queryEmbedding,
       this.TOP_K,

@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { OracleConnectionService } from '../../database/oracle-connection.service';
+import { PostgresConnectionService } from '../../database/postgres-connection.service';
 
 interface HistoryRowLike {
   role?: string;
@@ -13,7 +13,7 @@ interface HistoryRowLike {
 export class ChatHistoryService {
   private readonly logger = new Logger(ChatHistoryService.name);
 
-  constructor(private readonly oracleConnection: OracleConnectionService) {}
+  constructor(private readonly postgresConnection: PostgresConnectionService) {}
 
   async saveMessage(
     sessionId: string,
@@ -28,24 +28,16 @@ export class ChatHistoryService {
       return;
     }
 
-    const connection = await this.oracleConnection.getConnection();
     try {
-      await connection.execute(
+      await this.postgresConnection.query(
         `INSERT INTO chat_sessions (session_id, role, content)
-         VALUES (:sessionId, :role, :content)`,
-        {
-          sessionId: normalizedSessionId,
-          role: normalizedRole,
-          content: normalizedContent,
-        },
+         VALUES ($1, $2, $3)`,
+        [normalizedSessionId, normalizedRole, normalizedContent],
       );
-      await connection.commit();
     } catch (error) {
       this.logger.warn(
         `No se pudo guardar el historial para la sesión ${normalizedSessionId}: ${String(error)}`,
       );
-    } finally {
-      await this.closeConnection(connection);
     }
   }
 
@@ -55,20 +47,19 @@ export class ChatHistoryService {
   ): Promise<{ role: string; content: string }[]> {
     const normalizedSessionId = sessionId?.trim() || 'default';
     const safeLimit = Math.max(1, Math.min(Math.floor(limit || 6), 50));
-    const connection = await this.oracleConnection.getConnection();
 
     try {
-      const result = (await connection.execute(
+      const result = (await this.postgresConnection.query(
         `SELECT role, content
          FROM (
            SELECT role, content, created_at
            FROM chat_sessions
-           WHERE session_id = :sessionId
+           WHERE session_id = $1
            ORDER BY created_at DESC
-           FETCH FIRST ${safeLimit} ROWS ONLY
-         )
+           LIMIT $2
+         ) AS recent_messages
          ORDER BY created_at ASC`,
-        { sessionId: normalizedSessionId },
+        [normalizedSessionId, safeLimit],
       )) as { rows?: unknown[] };
 
       const rows = Array.isArray(result?.rows) ? result.rows : [];
@@ -80,8 +71,6 @@ export class ChatHistoryService {
         `No se pudo leer el historial para la sesión ${normalizedSessionId}: ${String(error)}`,
       );
       return [];
-    } finally {
-      await this.closeConnection(connection);
     }
   }
 
@@ -119,17 +108,5 @@ export class ChatHistoryService {
     }
 
     return fallback;
-  }
-
-  private async closeConnection(connection: {
-    close: () => Promise<unknown>;
-  }): Promise<void> {
-    try {
-      await connection.close();
-    } catch (error) {
-      this.logger.warn(
-        `No se pudo cerrar la conexión de Oracle: ${String(error)}`,
-      );
-    }
   }
 }

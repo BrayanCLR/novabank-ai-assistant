@@ -127,7 +127,7 @@ export default function NovaBankDashboard() {
       <main className="flex-1 flex flex-col min-w-0 bg-[#09090b] relative background-grid w-full">
 
         {/* TOP HEADER */}
-        <header className="h-20 md:h-24 bg-[#09090b]/80 backdrop-blur-md border-b border-zinc-800/50 flex items-center justify-between md:justify-center px-4 md:px-6 relative z-10 shadow-xl flex-shrink-0">
+        <header className="h-20 md:h-24 bg-[#09090b]/80 backdrop-blur-md border-b border-zinc-800/50 flex items-center justify-between md:justify-center px-4 md:px-6 relative z-10 shadow-xl shrink-0">
 
           <button
             className="md:hidden text-zinc-400 hover:text-orange-500 transition-colors p-2"
@@ -205,7 +205,7 @@ function SystemStatusStrip() {
 
   return (
     <div className="p-4 border-t border-zinc-800/80 bg-[#0a0a0c] font-mono text-[10px] md:text-[11px] text-zinc-500 flex items-center justify-center gap-2 shadow-inner">
-      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${status === 'online' ? 'bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.8)] animate-pulse' :
+      <span className={`w-2 h-2 rounded-full shrink-0 ${status === 'online' ? 'bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.8)] animate-pulse' :
         status === 'offline' ? 'bg-red-600' : 'bg-zinc-600'
         }`} />
       <span className="tracking-wider truncate">
