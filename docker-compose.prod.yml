@@ -5,16 +5,17 @@ services:
       dockerfile: Dockerfile
     environment:
       - GEMINI_API_KEY=${GEMINI_API_KEY}
-      - GEMINI_MODEL=${GEMINI_MODEL}
-      - EMBEDDING_MODEL=${EMBEDDING_MODEL}
-      - ORACLE_USER=${ORACLE_USER}
-      - ORACLE_PASSWORD=${ORACLE_PASSWORD}
-      - ORACLE_CONNECT_STRING=${ORACLE_CONNECT_STRING}
-      - ORACLE_WALLET_LOCATION=/opt/oracle/wallet
-      - ORACLE_WALLET_PASSWORD=${ORACLE_WALLET_PASSWORD}
-      - OCI_BUCKET_NAME=${OCI_BUCKET_NAME}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.5-flash}
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-nomic-embed-text}
+      - EMBEDDING_DIMENSIONS=${EMBEDDING_DIMENSIONS:-768}
+      - POSTGRES_HOST=${POSTGRES_HOST:-postgres}
+      - POSTGRES_PORT=${POSTGRES_PORT:-5432}
+      - POSTGRES_DB=${POSTGRES_DB:-novabank}
+      - POSTGRES_USER=${POSTGRES_USER:-dev_admin}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://ollama:11434}
+      - LOCAL_STORAGE_PATH=/knowledge_base
     volumes:
-      - ./oracle_wallet:/opt/oracle/wallet:ro
       - ./knowledge_base:/knowledge_base
     healthcheck:
       test:
@@ -29,6 +30,8 @@ services:
       retries: 5
       start_period: 30s
     restart: unless-stopped
+    networks:
+      - proxy
 
   frontend:
     build:
@@ -39,6 +42,8 @@ services:
     environment:
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
     restart: unless-stopped
+    networks:
+      - proxy
 
   nginx:
     image: nginx:alpine
@@ -55,9 +60,14 @@ services:
       frontend:
         condition: service_started
     restart: unless-stopped
+    networks:
+      - proxy
 
   certbot:
     image: certbot/certbot
     volumes:
       - ./certbot/www:/var/www/certbot
       - ./certbot/conf:/etc/letsencrypt
+networks:
+  proxy:
+    external: true

@@ -1,19 +1,25 @@
 # ---- Etapa 1: build ----
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 WORKDIR /app
 
 # Necesario ANTES del build: Next.js hornea NEXT_PUBLIC_* en el bundle
-# del navegador durante "npm run build", no en tiempo de ejecución.
+# del navegador durante "pnpm run build", no en tiempo de ejecución.
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
-COPY package*.json ./
-RUN npm ci
+# Necesario ANTES del build: Next.js
+# Instalar pnpm y configurar corepack para usar pnpm en lugar de npm 
+RUN corepack enable pnpm
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+
+RUN pnpm install --frozen-lockfile
+
 COPY . .
-RUN npm run build
+RUN pnpm run build
 
 # ---- Etapa 2: producción, solo el server standalone ----
-FROM node:20-alpine AS runner
+FROM node:22-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 

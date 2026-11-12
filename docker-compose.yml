@@ -1,22 +1,54 @@
 services:
-  oracle-db:
-    image: container-registry.oracle.com/database/free:latest
-    container_name: novabank-oracle-db
+  backend:
+    build:
+      context: ./backend-agent
+      dockerfile: Dockerfile
     environment:
-      ORACLE_PWD: ${ORACLE_DB_PASSWORD}
-      ORACLE_CHARACTERSET: AL32UTF8
-    ports:
-      - "1521:1521"
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.5-flash}
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-nomic-embed-text}
+      - EMBEDDING_DIMENSIONS=${EMBEDDING_DIMENSIONS:-768}
+      - POSTGRES_HOST=${POSTGRES_HOST:-postgres}
+      - POSTGRES_PORT=${POSTGRES_PORT:-5432}
+      - POSTGRES_DB=${POSTGRES_DB:-novabank}
+      - POSTGRES_USER=${POSTGRES_USER:-dev_admin}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://ollama:11434}
+      - LOCAL_STORAGE_PATH=/knowledge_base
     volumes:
-      - oracle-data:/opt/oracle/oradata
-      - ./init.sql:/opt/oracle/scripts/startup/01_init.sql:ro
+      - ./knowledge_base:/knowledge_base
     healthcheck:
-      test: ["CMD", "healthcheck.sh"]
-      interval: 30s
-      timeout: 10s
-      retries: 15
-      start_period: 90s
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "require('http').get('http://localhost:3000/agent/status', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     restart: unless-stopped
+    ports:
+      - 3000:3000
+    networks:
+      - proxy
 
-volumes:
-  oracle-data:
+  frontend:
+    build:
+      context: ./frontend-chat
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+    environment:
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+    restart: unless-stopped
+    ports:
+      - 3001:3000
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    external: true      
