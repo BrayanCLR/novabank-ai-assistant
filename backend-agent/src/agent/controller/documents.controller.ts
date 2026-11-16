@@ -17,7 +17,7 @@ import * as path from 'path';
 
 import { KnowledgeService } from '../infrastructure/knowledge/knowledge.service';
 import { UniversalParser } from '../infrastructure/parsers/universal.parser';
-import { ObjectStorageService } from '../infrastructure/storage/object-storage.service';
+import { LocalStorageService } from '../infrastructure/storage/local-storage.service';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const FILE_NAME_REGEX = /^[a-zA-Z0-9._-]+$/;
@@ -29,14 +29,9 @@ export class DocumentsController {
   constructor(
     private readonly knowledgeService: KnowledgeService,
     private readonly parser: UniversalParser,
-    private readonly objectStorageService: ObjectStorageService,
+    private readonly localStorageService: LocalStorageService,
   ) {}
 
-  /**
-   * Ya no resolvemos una ruta local (no hay disco que atravesar en
-   * Object Storage), pero seguimos validando el formato del nombre
-   * para no aceptar nombres de objeto con caracteres inesperados.
-   */
   private validateFileName(fileName: string): string {
     const safeFileName = path.basename(fileName);
     if (!FILE_NAME_REGEX.test(safeFileName)) {
@@ -47,7 +42,7 @@ export class DocumentsController {
 
   @Get('documents')
   async listDocuments() {
-    const objects = await this.objectStorageService.list();
+    const objects = await this.localStorageService.list();
 
     const documents = objects
       .filter((obj) =>
@@ -100,14 +95,10 @@ export class DocumentsController {
 
     const objectName = `${baseName}_${timestamp}${ext}`;
 
-    await this.objectStorageService.upload(
-      objectName,
-      file.buffer,
-      file.mimetype,
-    );
+    await this.localStorageService.upload(objectName, file.buffer);
 
     this.logger.log(
-      `Documento subido a Object Storage: ${objectName}. Reindexando...`,
+      `Documento subido a local Storage: ${objectName}. Reindexando...`,
     );
 
     await this.knowledgeService.reindex();
@@ -125,7 +116,7 @@ export class DocumentsController {
     @Res() res: Response,
   ) {
     const safeFileName = this.validateFileName(fileName);
-    const buffer = await this.objectStorageService.download(safeFileName);
+    const buffer = await this.localStorageService.download(safeFileName);
 
     res.set({
       'Content-Disposition': `attachment; filename="${safeFileName}"`,
@@ -138,10 +129,10 @@ export class DocumentsController {
   async deleteDocument(@Param('fileName') fileName: string) {
     const safeFileName = this.validateFileName(fileName);
 
-    await this.objectStorageService.delete(safeFileName);
+    await this.localStorageService.delete(safeFileName);
 
     this.logger.log(
-      `Documento eliminado de Object Storage: ${safeFileName}. Reindexando...`,
+      `Documento eliminado de local Storage: ${safeFileName}. Reindexando...`,
     );
 
     await this.knowledgeService.reindex();

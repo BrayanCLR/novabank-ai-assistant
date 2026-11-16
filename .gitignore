@@ -13,3 +13,14 @@ Thumbs.db
 .env
 .env.*
 *:Zone.Identifier
+
+# pnpm
+.pnpm-store/
+
+# archivos de construcción de TypeScript y JavaScript
+tsconfig.build.tsbuildinfo 
+
+# documentacion personal
+mi-manual/
+AGENTS.md
+MEMORY.md

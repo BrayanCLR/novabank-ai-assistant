@@ -2,15 +2,15 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AgentController } from './controller/agent.controller';
 import { AgentService } from './application/agent.service';
-import { EmbeddingService } from './infrastructure/gemini/embedding.service';
+import { EmbeddingService } from './infrastructure/ollama/embedding.service';
 import { GeminiService } from './infrastructure/gemini/gemini.service';
 import { KnowledgeService } from './infrastructure/knowledge/knowledge.service';
 import { VectorStoreService } from './infrastructure/knowledge/vector-store.service';
 import { UniversalParser } from './infrastructure/parsers/universal.parser';
 import { DocumentsController } from './controller/documents.controller';
-import { OracleConnectionService } from './infrastructure/database/oracle-connection.service';
+import { PostgresConnectionService } from './infrastructure/database/postgres-connection.service';
 import { ChatHistoryService } from './infrastructure/knowledge/chat/chat-history.service';
-import { ObjectStorageService } from './infrastructure/storage/object-storage.service';
+import { LocalStorageService } from './infrastructure/storage/local-storage.service';
 
 @Module({
   imports: [ConfigModule],
@@ -22,9 +22,9 @@ import { ObjectStorageService } from './infrastructure/storage/object-storage.se
     KnowledgeService,
     VectorStoreService,
     UniversalParser,
-    OracleConnectionService,
+    PostgresConnectionService,
     ChatHistoryService,
-    ObjectStorageService,
+    LocalStorageService,
   ],
 })
 export class AgentModule {}

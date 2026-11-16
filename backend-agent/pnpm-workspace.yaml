@@ -1,0 +1,9 @@
+allowBuilds:
+  '@google/genai': true
+  '@parcel/watcher': true
+  protobufjs: true
+  tesseract.js: true
+  unrs-resolver: true
+
+overrides:
+  test-exclude: ^8.0.0

@@ -5,11 +5,10 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // RF-06: rechaza requests inválidos antes de que lleguen al controller
+  // Configuración de pipes globales para validación y transformación de datos
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
-  // Vas a necesitarlo en unos días cuando frontend-chat (Next.js, otro
-  // puerto/origen) empiece a llamar a esta API desde el navegador.
+  // Habilitar CORS (Cross-Origin Resource Sharing) para permitir solicitudes desde diferentes dominios
   app.enableCors();
 
   await app.listen(process.env.PORT ?? 3000);

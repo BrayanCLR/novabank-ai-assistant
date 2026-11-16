@@ -31,7 +31,7 @@ export class GeminiService {
       return;
     }
 
-    this.client = new GoogleGenAI({ apiKey });
+    this.client = new GoogleGenAI({ apiKey, apiVersion: 'v1beta' });
 
     this.logger.log('GeminiService inicializado (Google GenAI SDK)');
   }
