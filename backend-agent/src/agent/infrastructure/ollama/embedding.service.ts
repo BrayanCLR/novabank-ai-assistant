@@ -15,7 +15,7 @@ export class EmbeddingService {
   constructor(private readonly configService: ConfigService) {
     this.baseUrl = this.configService.get<string>(
       'OLLAMA_BASE_URL',
-      'http://ollama.brayan.co:11434/',
+      'http://ollama:11434/',
     );
 
     if (!this.baseUrl) {
@@ -26,7 +26,7 @@ export class EmbeddingService {
 
     this.embeddingTimeoutMs = this.configService.get<number>(
       'EMBEDDING_TIMEOUT_MS',
-      10000,
+      90000,
     );
 
     this.modelName = this.configService.get<string>(
